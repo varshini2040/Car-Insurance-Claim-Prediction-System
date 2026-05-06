@@ -42,15 +42,29 @@ const UserDetails = () => {
 const { id } = useParams();
 
 useEffect(() => {
-  authService.getUserById(id).then((res) => {
-    if (res.success) {
-      setCurrentUser(res.user);
+  const fetchUserDetails = async () => {
+    try {
+      const res = await authService.getUserById(id);
+      
+      if (res.success && res.user) {
+        setCurrentUser(res.user);
 
-      Object.keys(formDataRef.current).forEach((key) => {
-        formDataRef.current[key] = res.user[key] || "";
-      });
+        Object.keys(formDataRef.current).forEach((key) => {
+          formDataRef.current[key] = res.user[key] || "";
+        });
+      } else {
+        console.error("Failed to fetch user:", res.message);
+        alert("Failed to load user details");
+      }
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      alert("Error loading user details");
     }
-  });
+  };
+
+  if (id) {
+    fetchUserDetails();
+  }
 }, [id]);
 
   // -------------------------------------------------------------
@@ -65,12 +79,19 @@ useEffect(() => {
   // SAVE UPDATED PROFILE TO MONGODB
   // -------------------------------------------------------------
   const handleSave = async () => {
-    const result = await authService.adminUpdateUser(id, formDataRef.current);
+    try {
+      const result = await authService.adminUpdateUser(id, formDataRef.current);
 
-    if (result.success) {
-      alert("Profile updated successfully!");
-      setCurrentUser(result.updated);
-      setIsEditing(false);
+      if (result.success) {
+        alert("✅ Profile updated successfully!");
+        setCurrentUser(result.updated);
+        setIsEditing(false);
+      } else {
+        alert("❌ Update failed: " + (result.message || "Unknown error"));
+      }
+    } catch (error) {
+      console.error("Save error:", error);
+      alert("❌ Error saving profile: " + error.message);
     }
   };
 
@@ -175,10 +196,11 @@ useEffect(() => {
             disabled={!isEditing}
           >
             <option>Car</option>
-            <option>Motorbike</option>
-            <option>Scooter</option>
-            <option>Truck</option>
-            <option>Bus</option>
+            <option>Swift</option>
+            <option>SUV</option>
+            <option>Sedan</option>
+            <option>Electric Car</option>
+            <option>Sports Car</option>
           </select>
         </div>
 

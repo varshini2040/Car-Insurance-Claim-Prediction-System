@@ -8,30 +8,39 @@ const AdminUsersPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // 🔹 FETCH USERS FROM MONGODB
   useEffect(() => {
     const fetchUsers = async () => {
       try {
+        setLoading(true);
+        setError(null);
+        
         const res = await fetch("http://localhost:5000/api/users");
+        
+        if (!res.ok) {
+          throw new Error(`API error: ${res.status}`);
+        }
+        
         const data = await res.json();
+
+        if (!Array.isArray(data)) {
+          throw new Error("Invalid response format");
+        }
 
         // 🔥 Map MongoDB schema → UI schema
         const mappedUsers = data.map(user => ({
           id: user._id,
-          fullName: user.fullName || user.name,
-          email: user.email,
+          fullName: user.fullName || user.name || "N/A",
+          email: user.email || "N/A",
           phone: user.phone || "N/A",
           vehicleModel: user.vehicleModel || "N/A",
           vehicleType: user.vehicleType || "N/A",
+          licensePlate: user.licensePlate || "N/A",
           policyType: user.policyType || "N/A",
-          status:
-            user.claimStatus === "approved"
-              ? "approved"
-              : user.claimStatus === "rejected"
-              ? "rejected"
-              : "pending",
           policyNumber: user.policyNumber || "N/A",
+          status: user.claimStatus || "pending",
           joinDate: user.createdAt,
           applications: 1
         }));
@@ -40,7 +49,9 @@ const AdminUsersPage = () => {
         setLoading(false);
       } catch (error) {
         console.error("Error fetching users:", error);
+        setError(error.message || "Failed to fetch users");
         setLoading(false);
+        setUsers([]);
       }
     };
 
@@ -70,11 +81,17 @@ const AdminUsersPage = () => {
   // 🔹 UPDATE STATUS (Approve / Reject)
   const handleStatusUpdate = async (userId, newStatus) => {
     try {
-      await fetch(`http://localhost:5000/api/users/${userId}/status`, {
+      const res = await fetch(`http://localhost:5000/api/users/${userId}/status`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ claimStatus: newStatus })
       });
+
+      if (!res.ok) {
+        throw new Error(`Update failed: ${res.status}`);
+      }
+
+      const responseData = await res.json();
 
       setUsers(prev =>
         prev.map(user =>
@@ -87,6 +104,7 @@ const AdminUsersPage = () => {
       }
     } catch (error) {
       console.error("Error updating status:", error);
+      alert("Failed to update status");
     }
   };
 
@@ -95,6 +113,19 @@ const AdminUsersPage = () => {
     return (
       <div className="admin-page loading">
         <div className="loading-spinner">Loading users...</div>
+      </div>
+    );
+  }
+
+  // 🔹 ERROR STATE
+  if (error) {
+    return (
+      <div className="admin-page error">
+        <div className="error-message">
+          <h3>Error Loading Users</h3>
+          <p>{error}</p>
+          <button onClick={() => window.location.reload()}>Retry</button>
+        </div>
       </div>
     );
   }

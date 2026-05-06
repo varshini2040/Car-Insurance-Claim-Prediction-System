@@ -186,7 +186,7 @@ phone: '',
                   style={styles.select}
                 >
                   <option value="">Select Vehicle Type</option>
-                  <option value="Luxury Car">Luxury Car</option>
+                  <option value="Swift">Swift</option>
                   <option value="Electric Vehicle">Electric Vehicle</option>
                   <option value="Sedan">Sedan</option>
                   <option value="sportcar">sportcar</option>
@@ -349,7 +349,7 @@ phone: '',
                   name="licenseFront"
                   onChange={handleFileChange}
                   accept="image/*"
-                 
+                  required
                   style={styles.fileInput}
                 />
                 <small style={styles.helpText}>JPG, PNG, PDF (Max 5MB)</small>
@@ -375,7 +375,7 @@ phone: '',
                   name="vehicleFront"
                   onChange={handleFileChange}
                   accept="image/*"
-                  
+                   required
                   style={styles.fileInput}
                 />
                 <small style={styles.helpText}>JPG, PNG (Max 5MB)</small>
@@ -388,7 +388,7 @@ phone: '',
                   name="vehicleBack"
                   onChange={handleFileChange}
                   accept="image/*"
-                 
+                  required
                   style={styles.fileInput}
                 />
                 <small style={styles.helpText}>JPG, PNG (Max 5MB)</small>

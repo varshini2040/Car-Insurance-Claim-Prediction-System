@@ -23,26 +23,13 @@ const Predict = () => {
   const [status, setStatus] = useState("");
 
   useEffect(() => {
-    const fetchPolicy = async () => {
-      try {
-        const res = await axios.get(
-          `http://localhost:5000/api/insurance/latest/${user._id}`
-          
-        );
-console.log("API RESPONSE:", res.data);
-        if (res.data) {
-          setFormData((prev) => ({
-            ...prev,
-            policyNumber: res.data.policyNumber,
-            licensePlate: res.data.licensePlate
-          }));
-        }
-      } catch (err) {
-        console.log(err);
-      }
-    };
-
-    if (user) fetchPolicy();
+    if (user) {
+      setFormData((prev) => ({
+        ...prev,
+        policyNumber: user.policyNumber || "",
+        licensePlate: user.licensePlate || ""
+      }));
+    }
   }, [user]);
 
   // ============================
@@ -138,20 +125,21 @@ console.log("API RESPONSE:", res.data);
           <div style={styles.section}>
             <h3 style={styles.sectionTitle}>Policy Details</h3>
             <div style={styles.formGrid}>
-           <input
-  name="policyNumber"
-  value={formData.policyNumber}
-  readOnly
-  style={{ ...styles.input, backgroundColor: "#ffffff" }}
-/>
-
-<input
-  name="licensePlate"
-  value={formData.licensePlate}
-  readOnly
-  style={{ ...styles.input, backgroundColor: "#ffffff" }}
-/>
-             </div>
+              <input
+                name="policyNumber"
+                placeholder="Policy Number"
+                value={formData.policyNumber}
+                readOnly
+                style={styles.input}
+              />
+              <input
+                name="licensePlate"
+                placeholder="License Plate"
+                value={formData.licensePlate}
+                readOnly
+                style={styles.input}
+              />
+            </div>
           </div>
 
           {/* Accident Section */}
@@ -201,6 +189,7 @@ console.log("API RESPONSE:", res.data);
             
             {accidentImage && (
               <img src={URL.createObjectURL(accidentImage)} alt="preview" style={styles.preview}/>
+              
             )}
           </div>
 
@@ -278,10 +267,22 @@ const styles = {
     gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
     gap: '1rem'
   },
+  formGroup: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.5rem'
+  },
+  label: {
+    fontWeight: '600',
+    color: '#333',
+    fontSize: '0.9rem'
+  },
   input: {
     padding: '0.75rem',
     border: '2px solid #e9ecef',
-    borderRadius: '6px'
+    borderRadius: '6px',
+    fontSize: '1rem',
+    fontFamily: 'inherit'
   },
   fileInput: {
     padding: '0.5rem'

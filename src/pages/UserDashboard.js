@@ -1,10 +1,19 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
+import { authService } from "../services/authService";
 
-const UserDashboard = ({ user }) => {
+const UserDashboard = ({ user, onUserUpdate }) => {
   const [applications, setApplications] = useState([]);
   const [claims, setClaims] = useState([]);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [profileData, setProfileData] = useState({
+    fullName: user?.fullName || "",
+    phone: user?.phone || "",
+    address: user?.address || "",
+    dateOfBirth: user?.dateOfBirth || "",
+  });
+  const [isSaving, setIsSaving] = useState(false);
 
 useEffect(() => {
   loadMyApplications();
@@ -36,6 +45,41 @@ const loadMyApplications = async () => {
     } catch (error) {
       console.log("Error Loading Claims:", error);
     }
+  };
+
+  // ===============================
+  // SAVE PROFILE
+  // ===============================
+  const handleSaveProfile = async () => {
+    try {
+      setIsSaving(true);
+      const result = await authService.updateUserProfile(user._id, profileData);
+
+      if (result.success) {
+        alert("✅ Profile updated successfully!");
+        setIsEditingProfile(false);
+        
+        // Update parent component with new user data
+        if (onUserUpdate) {
+          onUserUpdate(result.updated);
+        }
+      } else {
+        alert("❌ Failed to update profile: " + (result.message || "Unknown error"));
+      }
+    } catch (error) {
+      console.error("Error saving profile:", error);
+      alert("❌ Error saving profile");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleProfileChange = (e) => {
+    const { name, value } = e.target;
+    setProfileData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   // Badge Style
@@ -278,8 +322,73 @@ const styles = {
     marginBottom: "25px",
     width: "100%",
   },
-  sectionHeader: { display: "flex", justifyContent: "space-between" },
-  sectionTitle: { display: "flex", gap: "10px", fontSize: "1.5rem" },
+  sectionHeader: { display: "flex", justifyContent: "space-between", alignItems: "center" },
+  sectionTitle: { display: "flex", gap: "10px", fontSize: "1.5rem", margin: 0 },
+  editButton: {
+    background: "#0d6efd",
+    color: "white",
+    border: "none",
+    padding: "8px 16px",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontSize: "0.9rem",
+    fontWeight: "600",
+  },
+
+  profileGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+    gap: "1.5rem",
+    marginTop: "1rem",
+  },
+  profileField: {
+    display: "flex",
+    flexDirection: "column",
+  },
+  label: {
+    fontWeight: "600",
+    marginBottom: "0.5rem",
+    color: "#212529",
+  },
+  input: {
+    padding: "0.75rem",
+    border: "2px solid #e9ecef",
+    borderRadius: "6px",
+    fontSize: "1rem",
+    fontFamily: "inherit",
+  },
+  displayValue: {
+    padding: "0.75rem",
+    backgroundColor: "#f8f9fa",
+    borderRadius: "6px",
+    margin: 0,
+    color: "#555",
+  },
+  profileActions: {
+    display: "flex",
+    gap: "1rem",
+    marginTop: "1.5rem",
+  },
+  saveButton: {
+    background: "#198754",
+    color: "white",
+    border: "none",
+    padding: "10px 20px",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontSize: "1rem",
+    fontWeight: "600",
+  },
+  cancelButton: {
+    background: "#6c757d",
+    color: "white",
+    border: "none",
+    padding: "10px 20px",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontSize: "1rem",
+    fontWeight: "600",
+  },
 
   newApplicationButton: {
     background: "#0d6efd",

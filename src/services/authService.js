@@ -101,4 +101,34 @@ export const authService = {
       return { success: false };
     }
   },
+
+  // USER UPDATE OWN PROFILE
+  async updateUserProfile(id, updatedData) {
+    try {
+      const token = localStorage.getItem("token");
+
+      const res = await axios.put(
+        `${USER_API}/${id}/profile`,
+        updatedData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (res.data.success) {
+        // Update localStorage with new user data
+        localStorage.setItem("user", JSON.stringify(res.data.updated));
+      }
+
+      return res.data;
+    } catch (error) {
+      console.error("Profile update error:", error);
+      return { 
+        success: false, 
+        message: error.response?.data?.message || "Failed to update profile" 
+      };
+    }
+  },
 };

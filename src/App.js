@@ -71,6 +71,12 @@ const AppContent = ({ user, isAdmin, login, logout }) => {
     }
   };
 
+  const handleUserUpdate = (updatedUser) => {
+    // Update user in localStorage and state
+    localStorage.setItem("user", JSON.stringify(updatedUser));
+    login(updatedUser, false);
+  };
+
   return (
     <div className="App">
       <Header
@@ -110,7 +116,7 @@ const AppContent = ({ user, isAdmin, login, logout }) => {
           <Route
             path="/user-dashboard"
             element={
-              user ? <UserDashboard user={user} /> : <Navigate to="/signin" />
+              user ? <UserDashboard user={user} onUserUpdate={handleUserUpdate} /> : <Navigate to="/signin" />
             }
           />
            <Route path="/apply-claim" element={<Predict />} />
