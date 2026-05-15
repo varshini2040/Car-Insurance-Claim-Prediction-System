@@ -43,7 +43,7 @@ const Home = ({ user, isAdmin }) => {
             {/* Left Text */}
             <div style={styles.heroText}>
               <h1 style={styles.heroTitle}>
-                Predict Insurance Claims with AI
+                AI Resume Screening System
               </h1>
 
               <p style={styles.heroDescription}>
