@@ -16,13 +16,19 @@ const UserDetails = () => {
     phone: "",
     address: "",
     dateOfBirth: "",
-
+age: "",
+gender: "",
+maritalStatus: "",
+occupation: "",
+annualIncome: "",
     vehicleType: "",
     vehicleModel: "",
     vehicleYear: "",
     licensePlate: "",
     vehicleValue: "",
-
+vehicleAge: "",
+engineCapacity: "",
+fuelType: "",
     policyNumber: "",
     policyType: "",
     coverageAmount: "",
@@ -163,7 +169,67 @@ useEffect(() => {
             readOnly={!isEditing}
           />
         </div>
+<div className="input-group">
+  <label>Age *</label>
+  <input
+    type="number"
+    name="age"
+    defaultValue={formDataRef.current.age}
+    onChange={handleInputChange}
+    readOnly={!isEditing}
+  />
+</div>
 
+<div className="input-group">
+  <label>Gender *</label>
+  <select
+    name="gender"
+    defaultValue={formDataRef.current.gender}
+    onChange={handleInputChange}
+    disabled={!isEditing}
+  >
+    <option value="">Select Gender</option>
+    <option value="Male">Male</option>
+    <option value="Female">Female</option>
+    <option value="Other">Other</option>
+  </select>
+</div>
+
+<div className="input-group">
+  <label>Marital Status *</label>
+  <select
+    name="maritalStatus"
+    defaultValue={formDataRef.current.maritalStatus}
+    onChange={handleInputChange}
+    disabled={!isEditing}
+  >
+    <option value="">Select Status</option>
+    <option value="Single">Single</option>
+    <option value="Married">Married</option>
+    <option value="Divorced">Divorced</option>
+  </select>
+</div>
+
+<div className="input-group">
+  <label>Occupation *</label>
+  <input
+    name="occupation"
+    defaultValue={formDataRef.current.occupation}
+    onChange={handleInputChange}
+    readOnly={!isEditing}
+  />
+</div>
+
+<div className="input-group">
+  <label>Annual Income *</label>
+  <input
+    type="number"
+    name="annualIncome"
+    defaultValue={formDataRef.current.annualIncome}
+    onChange={handleInputChange}
+    readOnly={!isEditing}
+  />
+</div>
         <div className="input-group full-width">
           <label>Address</label>
           <textarea
@@ -245,6 +311,42 @@ useEffect(() => {
             readOnly={!isEditing}
           />
         </div>
+        <div className="input-group">
+  <label>Vehicle Age *</label>
+  <input
+    type="number"
+    name="vehicleAge"
+    defaultValue={formDataRef.current.vehicleAge}
+    onChange={handleInputChange}
+    readOnly={!isEditing}
+  />
+</div>
+
+<div className="input-group">
+  <label>Engine Capacity (CC) *</label>
+  <input
+    type="number"
+    name="engineCapacity"
+    defaultValue={formDataRef.current.engineCapacity}
+    onChange={handleInputChange}
+    readOnly={!isEditing}
+  />
+</div>
+
+<div className="input-group">
+  <label>Fuel Type *</label>
+  <select
+    name="fuelType"
+    defaultValue={formDataRef.current.fuelType}
+    onChange={handleInputChange}
+    disabled={!isEditing}
+  >
+    <option value="">Select Fuel Type</option>
+    <option value="Petrol">Petrol</option>
+    <option value="Diesel">Diesel</option>
+    <option value="Electric">Electric</option>
+  </select>
+</div>
       </div>
     </div>
   );

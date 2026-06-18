@@ -12,6 +12,11 @@ const UserSchema = new mongoose.Schema(
     phone: String,
     address: String,
     dateOfBirth: String,
+age: Number,
+gender: String,
+maritalStatus: String,
+occupation: String,
+annualIncome: Number,
 
     // VEHICLE DETAILS
     vehicleType: String,
@@ -19,6 +24,9 @@ const UserSchema = new mongoose.Schema(
     vehicleYear: String,
     licensePlate: String,
     vehicleValue: String,
+vehicleAge: Number,
+engineCapacity: Number,
+fuelType: String,
 
     // POLICY DETAILS
     policyNumber: String,

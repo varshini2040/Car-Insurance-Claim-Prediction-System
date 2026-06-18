@@ -17,9 +17,17 @@ const claimSchema = new mongoose.Schema(
     weather: String,
     describeAccident: String,
     estimatedCost: Number,
-
     claimAmount: Number,
-
+age: Number,
+gender: String,
+vehicleAge: Number,
+vehicleType: String,
+annualPremium: Number,
+drivingExperience: Number,
+accidentHistory: Number,
+claimHistory: Number,
+creditScore: Number,
+policyDuration: Number,
     accidentImage: String,
 
     predictionResult: {

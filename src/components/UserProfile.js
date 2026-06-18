@@ -143,19 +143,34 @@ const UserProfile = ({ user, isAdmin, onAction }) => {
             )}
 
             {/* Admin User Management */}
-            {isAdmin && (
-              <div
-                className="menu-item"
-                onClick={() => handleMenuItemClick("admin-users")}
-              >
-                <div className="menu-icon">
-                  <svg width="20" height="20" viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="10" fill="#4a90e2" />
-                  </svg>
-                </div>
-                <span>User Data</span>
-              </div>
-            )}
+{isAdmin && (
+  <div
+    className="menu-item"
+    onClick={() => handleMenuItemClick("admin-users")}
+  >
+    <div className="menu-icon">
+      <svg width="20" height="20" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" fill="#4a90e2" />
+      </svg>
+    </div>
+    <span>User Data</span>
+  </div>
+)}
+
+
+{isAdmin && (
+  <div
+    className="menu-item"
+    onClick={() => handleMenuItemClick("AnalyticsPage")}
+  >
+    <div className="menu-icon">
+      <svg width="20" height="20" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" fill="#4a90e2" />
+      </svg>
+    </div>
+    <span>Analytics Dashboard</span>
+  </div>
+)}
 
             {/* Settings Section */}
             <div className="menu-section">

@@ -61,7 +61,10 @@ const AppContent = ({ user, isAdmin, login, logout }) => {
 
       case "admin-users":
         navigate("/admin/users");
-        break;
+        break; 
+      case "AnalyticsPage":
+  navigate("/analytics");
+  break;
       case "logout":
         logout();
         navigate("/");
@@ -108,10 +111,12 @@ const AppContent = ({ user, isAdmin, login, logout }) => {
               )
             }
           />
+          
            <Route
   path="/analytics"
   element={isAdmin ? <AnalyticsPage /> : <Navigate to="/signin" />}
 />
+
 
           <Route
             path="/user-dashboard"

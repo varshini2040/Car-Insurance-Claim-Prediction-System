@@ -14,7 +14,17 @@ const Predict = () => {
     driverFault: "",
     weatherCondition: "",
     estimatedCost: "",
-    claimAmount: ""
+    claimAmount: "",
+    age: "",
+gender: "",
+vehicleAge: "",
+vehicleType: "",
+annualPremium: "",
+drivingExperience: "",
+accidentHistory: "",
+claimHistory: "",
+creditScore: "",
+policyDuration: ""
   });
 
   
@@ -80,6 +90,16 @@ const Predict = () => {
       data.append("describeAccident", formData.description);
       data.append("estimatedCost", formData.estimatedCost);
       data.append("claimAmount", formData.claimAmount);
+      data.append("age", formData.age);
+data.append("gender", formData.gender);
+data.append("vehicleAge", formData.vehicleAge);
+data.append("vehicleType", formData.vehicleType);
+data.append("annualPremium", formData.annualPremium);
+data.append("drivingExperience", formData.drivingExperience);
+data.append("accidentHistory", formData.accidentHistory);
+data.append("claimHistory", formData.claimHistory);
+data.append("creditScore", formData.creditScore);
+data.append("policyDuration", formData.policyDuration);
 
       // 🔥 optional image (comment if error)
       if (accidentImage) {
@@ -125,20 +145,26 @@ const Predict = () => {
           <div style={styles.section}>
             <h3 style={styles.sectionTitle}>Policy Details</h3>
             <div style={styles.formGrid}>
-              <input
-                name="policyNumber"
-                placeholder="Policy Number"
-                value={formData.policyNumber}
-                readOnly
-                style={styles.input}
-              />
-              <input
-                name="licensePlate"
-                placeholder="License Plate"
-                value={formData.licensePlate}
-                readOnly
-                style={styles.input}
-              />
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Policy Number</label>
+                <input
+                  name="policyNumber"
+                  placeholder="Policy Number"
+                  value={formData.policyNumber}
+                  readOnly
+                  style={{...styles.input, backgroundColor: '#f8f9fa', cursor: 'not-allowed'}}
+                />
+              </div>
+              <div style={styles.formGroup}>
+                <label style={styles.label}>License Plate</label>
+                <input
+                  name="licensePlate"
+                  placeholder="License Plate"
+                  value={formData.licensePlate}
+                  readOnly
+                  style={{...styles.input, backgroundColor: '#f8f9fa', cursor: 'not-allowed'}}
+                />
+              </div>
             </div>
           </div>
 
@@ -181,6 +207,104 @@ const Predict = () => {
               <input type="number" name="claimAmount" placeholder="Claim Amount *" required onChange={handleChange} style={styles.input}/>
             </div>
           </div>
+
+{/* Prediction Details */}
+<div style={styles.section}>
+  <h3 style={styles.sectionTitle}>Fraud Prediction Inputs</h3>
+
+  <div style={styles.formGrid}>
+
+    <input
+  type="number"
+  name="age"
+  placeholder="Age"
+  onChange={handleChange}
+  style={styles.input}
+/>
+
+<select
+  name="gender"
+  onChange={handleChange}
+  style={styles.input}
+>
+  <option value="">Gender</option>
+  <option value="Male">Male</option>
+  <option value="Female">Female</option>
+</select>
+
+<input
+  type="number"
+  name="vehicleAge"
+  placeholder="Vehicle Age"
+  onChange={handleChange}
+  style={styles.input}
+/>
+
+<select
+  name="vehicleType"
+  onChange={handleChange}
+  style={styles.input}
+>
+  <option value="">Vehicle Type</option>
+  <option value="Sedan">Sedan</option>
+  <option value="SUV">SUV</option>
+  <option value="Hatchback">Hatchback</option>
+  <option value="Truck">Truck</option>
+</select>
+
+<input
+  type="number"
+  name="annualPremium"
+  placeholder="Annual Premium"
+  onChange={handleChange}
+  style={styles.input}
+/>
+
+<input
+  type="number"
+  name="drivingExperience"
+  placeholder="Driving Experience (Years)"
+  onChange={handleChange}
+  style={styles.input}
+/>
+
+<input
+  type="number"
+  name="accidentHistory"
+  placeholder="Accident History"
+  onChange={handleChange}
+  style={styles.input}
+/>
+
+<input
+  type="number"
+  name="claimHistory"
+  placeholder="Claim History"
+  onChange={handleChange}
+  style={styles.input}
+/>
+
+<input
+  type="number"
+  name="creditScore"
+  placeholder="Credit Score (300-850)"
+  min="300"
+  max="850"
+  required
+  onChange={handleChange}
+  style={styles.input}
+/>
+
+<input
+  type="number"
+  name="policyDuration"
+  placeholder="Policy Duration (Months)"
+  onChange={handleChange}
+  style={styles.input}
+/>
+
+  </div>
+</div>
 
           {/* Upload Section */}
           <div style={styles.section}>

@@ -17,6 +17,16 @@ exports.submitClaim = async (req, res) => {
       describeAccident,
       estimatedCost,
       claimAmount,
+        age,
+  gender,
+  vehicleAge,
+  vehicleType,
+  annualPremium,
+  drivingExperience,
+  accidentHistory,
+  claimHistory,
+  creditScore,
+  policyDuration,
     } = req.body;
 
     // 🔥 VALIDATION
@@ -39,15 +49,29 @@ const newClaim = new Claim({
   userId,
   policyNumber,
   licensePlate,
+
+  // ML Prediction Fields
+  age,
+  gender,
+  vehicleAge,
+  vehicleType,
+  annualPremium,
+  drivingExperience,
+  accidentHistory,
+  claimHistory,
+  creditScore,
+  policyDuration,
+
+  // Accident Details
   accidentDate,
   accidentLocation,
   damageType,
 
-  // 🔥 FIXED VALUES (ADD HERE)
-  driverAtFault: req.body.driverAtFault || "Not Provided",
-  weather: req.body.weather || "Not Provided",
-  describeAccident: req.body.describeAccident || "Not Provided",
-  estimatedCost: req.body.estimatedCost || 0,
+  // Existing Fields
+  driverAtFault: driverAtFault || "Not Provided",
+  weather: weather || "Not Provided",
+  describeAccident: describeAccident || "Not Provided",
+  estimatedCost: estimatedCost || 0,
 
   claimAmount,
   accidentImage,

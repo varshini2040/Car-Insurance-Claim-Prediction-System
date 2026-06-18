@@ -141,7 +141,13 @@ router.put("/:id/profile", async (req, res) => {
 
     // Update only allowed fields (prevent updating sensitive data)
     const allowedFields = [
-      'fullName', 'phone', 'address', 'dateOfBirth',
+      'fullName', 'phone', 'address', 'dateOfBirth','age',
+'gender',
+'maritalStatus',
+'occupation',
+'annualIncome','vehicleAge',
+'engineCapacity',
+'fuelType',
       'vehicleType', 'vehicleModel', 'vehicleYear', 'licensePlate', 'vehicleValue',
       'policyType', 'coverageAmount', 'premiumAmount', 'policyStartDate', 'policyEndDate',
       'accidentDate', 'accidentDescription', 'damageAmount'

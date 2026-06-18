@@ -68,35 +68,44 @@ const handleSubmit = async (e) => {
   data.append("userPhoneNumber", formData.phone);
 
   try {
-    await applyInsurance(data);
-    alert("Insurance Application Submitted!");
+    const response = await applyInsurance(data);
+    
+    if (response.data.success) {
+      alert("Insurance Application Submitted!");
 
-    // Reset form
-    setFormData({
+      // 🔥 UPDATE LOCALSTORAGE WITH POLICY NUMBER AND LICENSE PLATE
+      const updatedUser = {
+        ...user,
+        policyNumber: response.data.policyNumber,
+        licensePlate: response.data.licensePlate || formData.licensePlate
+      };
+      localStorage.setItem("user", JSON.stringify(updatedUser));
 
-      name: user?.name || '',
-email: user?.email || '',
-phone: '',
-      vehicleType: '',
-      vehicleModel: '',
-      vehicleYear: '',
-      licensePlate: '',
-      purchaseDate: '',
-      coverageType: 'comprehensive',
-      policyDuration:'0',
-      previousClaims: '0',
-      drivingExperience: '',
-      annualMileage: ''
-    });
+      // Reset form
+      setFormData({
+        name: user?.name || '',
+        email: user?.email || '',
+        phone: '',
+        vehicleType: '',
+        vehicleModel: '',
+        vehicleYear: '',
+        licensePlate: '',
+        purchaseDate: '',
+        coverageType: 'comprehensive',
+        policyDuration:'0',
+        previousClaims: '0',
+        drivingExperience: '',
+        annualMileage: ''
+      });
 
-    setDocuments({
-      licenseFront: null,
-      licenseBack: null,
-      vehicleFront: null,
-      vehicleBack: null,
-      vehicleSide: null,
-      
-    });
+      setDocuments({
+        licenseFront: null,
+        licenseBack: null,
+        vehicleFront: null,
+        vehicleBack: null,
+        vehicleSide: null,
+      });
+    }
 
   } catch (err) {
     alert("Error submitting application");

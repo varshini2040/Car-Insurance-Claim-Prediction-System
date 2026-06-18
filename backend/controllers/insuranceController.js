@@ -13,9 +13,12 @@ const generatePolicyNumber = () => {
 // ================================
 exports.applyInsurance = async (req, res) => {
   try {
+    const User = require("../models/User");
 
     // 🔥 CHANGE HERE
     const policyNumber = req.body.policyNumber || generatePolicyNumber();
+    const licensePlate = req.body.licensePlate;
+    const userId = req.body.userId;
 
     const newInsurance = new Insurance({
       ...req.body,
@@ -30,10 +33,20 @@ exports.applyInsurance = async (req, res) => {
 
     await newInsurance.save();
 
+    // 🔥 UPDATE USER RECORD WITH POLICY NUMBER AND LICENSE PLATE
+    if (userId) {
+      await User.findByIdAndUpdate(
+        userId,
+        { policyNumber, licensePlate },
+        { new: true }
+      );
+    }
+
     res.json({
       success: true,
       message: "Insurance Applied Successfully",
       policyNumber,
+      licensePlate,
     });
 
   } catch (err) {

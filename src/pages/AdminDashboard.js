@@ -379,17 +379,54 @@ const predictClaim = (claim) => {
         <Modal close={() => setSelectedClaim(null)}>
           <h2>Claim Details</h2>
           <p><b>Policy Number:</b> {selectedClaim.policyNumber}</p>
-          <p><b>License plate:</b> {selectedClaim.licensePlate}</p>
-          <p><b>Accident Date:</b> {selectedClaim.accidentDate}</p>
-          <p><b>Accident Location:</b> {selectedClaim.accidentLocation}</p>
-          <p><b>Damage Type:</b> {selectedClaim.damageType}</p>
-          <p><b>Driver at Fault:</b> {selectedClaim.driverAtFault}</p>
-          <p><b>Weather:</b> {selectedClaim.weather}</p>
-          <p><b>Describe Accident:</b> {selectedClaim.describeAccident}</p>
-          <p><b>Estimated Cost:</b> ₹{selectedClaim.estimatedCost}</p>
-          <p><b>Claim Amount:</b> ₹{selectedClaim.claimAmount}</p>
+<p><b>License Plate:</b> {selectedClaim.licensePlate}</p>
+
+<p><b>Age:</b> {selectedClaim.age}</p>
+<p><b>Gender:</b> {selectedClaim.gender}</p>
+
+<p><b>Vehicle Age:</b> {selectedClaim.vehicleAge} Years</p>
+<p><b>Vehicle Type:</b> {selectedClaim.vehicleType}</p>
+
+<p><b>Annual Premium:</b> ₹{selectedClaim.annualPremium}</p>
+
+<p><b>Driving Experience:</b> {selectedClaim.drivingExperience} Years</p>
+
+<p><b>Accident History:</b> {selectedClaim.accidentHistory}</p>
+
+<p><b>Claim History:</b> {selectedClaim.claimHistory}</p>
+
+<p><b>Credit Score:</b> {selectedClaim.creditScore}</p>
+
+<p><b>Policy Duration:</b> {selectedClaim.policyDuration} Months</p>
+
+<p><b>Accident Date:</b> {selectedClaim.accidentDate}</p>
+<p><b>Accident Location:</b> {selectedClaim.accidentLocation}</p>
+<p><b>Damage Type:</b> {selectedClaim.damageType}</p>
+<p><b>Driver at Fault:</b> {selectedClaim.driverAtFault}</p>
+<p><b>Weather:</b> {selectedClaim.weather}</p>
+<p><b>Describe Accident:</b> {selectedClaim.describeAccident}</p>
+
+<p><b>Estimated Cost:</b> ₹{selectedClaim.estimatedCost}</p>
+<p><b>Claim Amount:</b> ₹{selectedClaim.claimAmount}</p>
+
+<p><b>Prediction Result:</b> {selectedClaim.predictionResult}</p>
+<p><b>Fraud Risk:</b> {selectedClaim.fraudRisk}</p>
+<p><b>Status:</b> {selectedClaim.status}</p>
           
-          {claimResult && (
+
+
+          {/* Accident Image */}
+          {selectedClaim.accidentImage && (
+            <div style={{ textAlign: "center" }}>
+              <h3>Accident Image</h3>
+              <img
+                src={`http://localhost:5000/uploads/${selectedClaim.accidentImage}`}
+                alt="Accident"
+                style={{ width: "250px", borderRadius: "10px" }}
+              />
+            </div>
+          )}
+{claimResult && (
   <div style={resultStyles.card}>
     <div
       style={{
@@ -429,20 +466,6 @@ const predictClaim = (claim) => {
     </div>
   </div>
 )}
-
-
-          {/* Accident Image */}
-          {selectedClaim.accidentImage && (
-            <div style={{ textAlign: "center" }}>
-              <h3>Accident Image</h3>
-              <img
-                src={`http://localhost:5000/uploads/${selectedClaim.accidentImage}`}
-                alt="Accident"
-                style={{ width: "250px", borderRadius: "10px" }}
-              />
-            </div>
-          )}
-
           {/* Approve Reject */}
           <div style={styles.modalActions}>
             <button
