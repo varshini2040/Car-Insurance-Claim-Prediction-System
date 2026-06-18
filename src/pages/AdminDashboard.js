@@ -8,7 +8,7 @@ const AdminDashboard = () => {
   const [selectedInsurance, setSelectedInsurance] = useState(null);
   const [selectedClaim, setSelectedClaim] = useState(null);
   const [insuranceResult, setInsuranceResult] = useState(null);
-  const [claimResult, setClaimResult] = useState(null);
+  const [claimResult, setClaimResult] = useState(null); // Object: { prediction, fraudProbability, riskLevel, modelUsed }
 
   
   // ============================
@@ -59,14 +59,56 @@ const predictInsurance = (app) => {
   }
 };
 
-// Detect Claim
-const predictClaim = (claim) => {
-  const amount = Number(claim.claimAmount || 0);
+// Detect Claim - ML INTEGRATED
+const predictClaim = async (claim) => {
+  try {
+    // Extract all 10 ML features from claim
+    const mlPayload = {
+      age: Number(claim.age) || 30,
+      gender: claim.gender || "Male",
+      vehicle_age: Number(claim.vehicleAge) || 5,
+      vehicle_type: claim.vehicleType || "Sedan",
+      annual_premium: Number(claim.annualPremium) || 50000,
+      driving_experience: Number(claim.drivingExperience) || 5,
+      accident_history: Number(claim.accidentHistory) || 0,
+      claim_history: Number(claim.claimHistory) || 0,
+      credit_score: Number(claim.creditScore) || 700,
+      policy_duration: Number(claim.policyDuration) || 2,
+      userId: claim.userId?._id,
+      policyNumber: claim.policyNumber,
+      claimId: claim._id
+    };
 
-  if (amount > 100000) {
-    setClaimResult("Fraudulent");
-  } else {
-    setClaimResult("Approved");
+    console.log("📊 Sending to ML API:", mlPayload);
+
+    // Call ML prediction endpoint
+    const response = await axios.post(
+      "http://localhost:5000/api/claims/predict",
+      mlPayload,
+      { timeout: 15000 }
+    );
+
+    console.log("✅ ML Response:", response.data);
+
+    // Determine risk level based on fraud probability
+    let riskLevel = "Low";
+    if (response.data.fraudProbability > 0.7) {
+      riskLevel = "High";
+    } else if (response.data.fraudProbability > 0.3) {
+      riskLevel = "Medium";
+    }
+
+    setClaimResult({
+      prediction: response.data.prediction === 1 ? "Fraud" : "Legitimate",
+      fraudProbability: response.data.fraudProbability || 0,
+      riskLevel: riskLevel,
+      modelUsed: response.data.modelUsed || "best_insurance_model"
+    });
+
+  } catch (error) {
+    console.error("❌ Prediction Error:", error.message);
+    alert(`❌ Error: ${error.response?.data?.error || error.message}`);
+    setClaimResult(null);
   }
 };
 
@@ -145,7 +187,10 @@ const predictClaim = (claim) => {
         <td style={styles.td}>
           <button
             style={styles.viewBtn}
-            onClick={() => setSelectedInsurance(app)}
+            onClick={() => {
+              setSelectedInsurance(app);
+              setInsuranceResult(null); // Clear previous result
+            }}
           >
             View
           </button>
@@ -204,7 +249,10 @@ const predictClaim = (claim) => {
         <td>
                 <button
                   style={styles.viewBtn}
-                  onClick={() => setSelectedClaim(c)}
+                  onClick={() => {
+                    setSelectedClaim(c);
+                    setClaimResult(null); // Clear previous result
+                  }}
                 >
                   👁 View
                 </button>
@@ -427,42 +475,294 @@ const predictClaim = (claim) => {
             </div>
           )}
 {claimResult && (
-  <div style={resultStyles.card}>
+  <div
+    style={{
+      marginTop: "20px",
+      borderRadius: "14px",
+      overflow: "hidden",
+      boxShadow: "0 10px 30px rgba(0,0,0,0.2)",
+      fontFamily: "'Segoe UI', Arial, sans-serif",
+      background: "white",
+    }}
+  >
+    {/* HEADER - Alert */}
     <div
       style={{
-        ...resultStyles.top,
-        background:
-          claimResult === "Approved" ? "#4CAF50" : "#C62828",
+        background: claimResult.prediction === "Fraud" ? "#dc2626" : "#16a34a",
+        color: "white",
+        padding: "20px",
+        textAlign: "center",
+        borderBottom: "4px solid rgba(0,0,0,0.1)",
       }}
     >
-      <div style={resultStyles.icon}>
-        {claimResult === "Approved" ? "✔" : "⚠"}
+      <div style={{ fontSize: "28px", marginBottom: "8px" }}>
+        {claimResult.prediction === "Fraud" ? "🚨" : "✅"}
       </div>
-      <h2>{claimResult}</h2>
-      <p>
-        {claimResult === "Approved"
-          ? "This claim is considered low risk"
-          : "This claim is considered high risk"}
-      </p>
+      <h2 style={{ margin: "0", fontSize: "20px", fontWeight: "600" }}>
+        {claimResult.prediction === "Fraud"
+          ? "Fraud Claim Detected"
+          : "Legitimate Claim Confirmed"}
+      </h2>
     </div>
 
-    <div style={resultStyles.middle}>
-      <h3>Customer: {selectedClaim.userId?.name}</h3>
-      <p>Vehicle: {selectedClaim.vehicleNumber}</p>
-      <p>Claim Amount: ₹{selectedClaim.claimAmount}</p>
-      <p>{selectedClaim.damageType || "Unspecified"}</p>
-    </div>
+    {/* MAIN CONTENT */}
+    <div style={{ padding: "25px" }}>
+      {/* Prediction Box */}
+      <div
+        style={{
+          background: claimResult.prediction === "Fraud" ? "#fee2e2" : "#dcfce7",
+          border: `2px solid ${
+            claimResult.prediction === "Fraud" ? "#fca5a5" : "#86efac"
+          }`,
+          borderRadius: "10px",
+          padding: "16px",
+          marginBottom: "20px",
+          textAlign: "center",
+        }}
+      >
+        <div style={{ fontSize: "14px", color: "#666", marginBottom: "6px" }}>
+          Prediction
+        </div>
+        <h3 style={{ margin: "0 0 8px 0", fontSize: "24px", fontWeight: "700" }}>
+          {claimResult.prediction}
+        </h3>
+        <div style={{ fontSize: "13px", color: "#555" }}>
+          Confidence: <strong>{(claimResult.fraudProbability * 100).toFixed(2)}%</strong>
+        </div>
+      </div>
 
-    <div
-      style={{
-        ...resultStyles.bottom,
-        background:
-          claimResult === "Approved" ? "#dcedc8" : "#ffcdd2",
-      }}
-    >
-      {claimResult === "Approved"
-        ? "Process the Claim"
-        : "Investigate the Claim Carefully"}
+      {/* Risk Level */}
+      <div
+        style={{
+          display: "flex",
+          gap: "12px",
+          marginBottom: "20px",
+        }}
+      >
+        <div
+          style={{
+            flex: 1,
+            background: "#f9fafb",
+            border: "1px solid #e5e7eb",
+            borderRadius: "8px",
+            padding: "12px",
+            textAlign: "center",
+          }}
+        >
+          <div style={{ fontSize: "12px", color: "#666", marginBottom: "4px" }}>
+            Risk Level
+          </div>
+          <div
+            style={{
+              fontSize: "16px",
+              fontWeight: "700",
+              color:
+                claimResult.riskLevel === "High"
+                  ? "#dc2626"
+                  : claimResult.riskLevel === "Medium"
+                  ? "#f59e0b"
+                  : "#16a34a",
+            }}
+          >
+            {claimResult.riskLevel}
+          </div>
+        </div>
+      </div>
+
+      {/* Customer & Claim Details Grid */}
+      <div style={{ marginBottom: "20px" }}>
+        <h3 style={{ margin: "0 0 12px 0", fontSize: "14px", fontWeight: "600", color: "#374151" }}>
+          Claim Information
+        </h3>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "12px",
+          }}
+        >
+          <div
+            style={{
+              background: "#f9fafb",
+              border: "1px solid #e5e7eb",
+              borderRadius: "8px",
+              padding: "12px",
+            }}
+          >
+            <div style={{ fontSize: "11px", color: "#666", marginBottom: "4px" }}>
+              Customer
+            </div>
+            <div style={{ fontSize: "14px", fontWeight: "600", color: "#111" }}>
+              {selectedClaim.userId?.name || "Unknown"}
+            </div>
+          </div>
+
+          <div
+            style={{
+              background: "#f9fafb",
+              border: "1px solid #e5e7eb",
+              borderRadius: "8px",
+              padding: "12px",
+            }}
+          >
+            <div style={{ fontSize: "11px", color: "#666", marginBottom: "4px" }}>
+              Vehicle
+            </div>
+            <div style={{ fontSize: "14px", fontWeight: "600", color: "#111" }}>
+              {selectedClaim.vehicleType || "N/A"}
+            </div>
+          </div>
+
+          <div
+            style={{
+              background: "#f9fafb",
+              border: "1px solid #e5e7eb",
+              borderRadius: "8px",
+              padding: "12px",
+            }}
+          >
+            <div style={{ fontSize: "11px", color: "#666", marginBottom: "4px" }}>
+              Claim Amount
+            </div>
+            <div style={{ fontSize: "14px", fontWeight: "600", color: "#111" }}>
+              ₹{selectedClaim.claimAmount}
+            </div>
+          </div>
+
+          <div
+            style={{
+              background: "#f9fafb",
+              border: "1px solid #e5e7eb",
+              borderRadius: "8px",
+              padding: "12px",
+            }}
+          >
+            <div style={{ fontSize: "11px", color: "#666", marginBottom: "4px" }}>
+              Damage Type
+            </div>
+            <div style={{ fontSize: "14px", fontWeight: "600", color: "#111" }}>
+              {selectedClaim.damageType || "N/A"}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Risk Indicators */}
+      <div style={{ marginBottom: "20px" }}>
+        <h3 style={{ margin: "0 0 12px 0", fontSize: "14px", fontWeight: "600", color: "#374151" }}>
+          Risk Indicators
+        </h3>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr 1fr",
+            gap: "12px",
+          }}
+        >
+          <div
+            style={{
+              background: "#f9fafb",
+              border: "1px solid #e5e7eb",
+              borderRadius: "8px",
+              padding: "12px",
+              textAlign: "center",
+            }}
+          >
+            <div style={{ fontSize: "11px", color: "#666", marginBottom: "4px" }}>
+              Credit Score
+            </div>
+            <div style={{ fontSize: "16px", fontWeight: "700", color: "#111" }}>
+              {selectedClaim.creditScore || "N/A"}
+            </div>
+          </div>
+
+          <div
+            style={{
+              background: "#f9fafb",
+              border: "1px solid #e5e7eb",
+              borderRadius: "8px",
+              padding: "12px",
+              textAlign: "center",
+            }}
+          >
+            <div style={{ fontSize: "11px", color: "#666", marginBottom: "4px" }}>
+              Accident History
+            </div>
+            <div style={{ fontSize: "16px", fontWeight: "700", color: "#111" }}>
+              {selectedClaim.accidentHistory || 0}
+            </div>
+          </div>
+
+          <div
+            style={{
+              background: "#f9fafb",
+              border: "1px solid #e5e7eb",
+              borderRadius: "8px",
+              padding: "12px",
+              textAlign: "center",
+            }}
+          >
+            <div style={{ fontSize: "11px", color: "#666", marginBottom: "4px" }}>
+              Claim History
+            </div>
+            <div style={{ fontSize: "16px", fontWeight: "700", color: "#111" }}>
+              {selectedClaim.claimHistory || 0}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Model Info */}
+      <div
+        style={{
+          background: "#f0f9ff",
+          border: "1px solid #bfdbfe",
+          borderRadius: "8px",
+          padding: "12px",
+          marginBottom: "20px",
+          textAlign: "center",
+        }}
+      >
+        <div style={{ fontSize: "11px", color: "#1e40af", marginBottom: "4px" }}>
+          Model Used
+        </div>
+        <div style={{ fontSize: "14px", fontWeight: "600", color: "#1e3a8a" }}>
+          {claimResult.modelUsed || "Random Forest Classifier"}
+        </div>
+      </div>
+
+      {/* Recommended Action */}
+      <div
+        style={{
+          background:
+            claimResult.prediction === "Fraud" ? "#fef2f2" : "#f0fdf4",
+          border: `2px solid ${
+            claimResult.prediction === "Fraud" ? "#fecaca" : "#bbf7d0"
+          }`,
+          borderRadius: "8px",
+          padding: "14px",
+          textAlign: "center",
+        }}
+      >
+        <div style={{ fontSize: "12px", color: "#666", marginBottom: "6px" }}>
+          Recommended Action
+        </div>
+        <h4
+          style={{
+            margin: "0",
+            fontSize: "15px",
+            fontWeight: "700",
+            color:
+              claimResult.prediction === "Fraud"
+                ? "#991b1b"
+                : "#166534",
+          }}
+        >
+          {claimResult.prediction === "Fraud"
+            ? "Manual Verification Required"
+            : "Process & Approve"}
+        </h4>
+      </div>
     </div>
   </div>
 )}

@@ -26,7 +26,7 @@ const authRoutes = require("./routes/authRoutes");
 app.use("/api/auth", authRoutes);
 
 const ClaimRoutes = require("./routes/ClaimRoutes");
-app.use("/api/Claims", ClaimRoutes);
+app.use("/api/claims", ClaimRoutes);
 
 // 🔹 ML Prediction Route
 const predictRoutes = require("./routes/predictRoutes");

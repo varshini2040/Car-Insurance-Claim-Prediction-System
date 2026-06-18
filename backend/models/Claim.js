@@ -29,7 +29,10 @@ claimHistory: Number,
 creditScore: Number,
 policyDuration: Number,
     accidentImage: String,
-
+prediction: {
+  type: Number,
+  default: 0,
+},
     predictionResult: {
       type: String,
       default: "Pending",
@@ -38,6 +41,16 @@ policyDuration: Number,
     fraudRisk: {
       type: String,
       default: "Low",
+    },
+
+    fraudProbability: {
+      type: Number,
+      default: 0,
+    },
+
+    modelUsed: {
+      type: String,
+      default: "random_forest",
     },
 
     status: {

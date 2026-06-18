@@ -1,5 +1,5 @@
 const Claim = require("../models/Claim");
-
+const axios = require("axios");
 // ================================
 // 1️⃣ USER SUBMIT CLAIM
 // ================================
@@ -44,6 +44,26 @@ exports.submitClaim = async (req, res) => {
       accidentImage = req.files.accidentImage[0].filename;
     }
 
+// ML Prediction
+const predictionResponse = await axios.post(
+  "http://127.0.0.1:5001/predict",
+  {
+    age,
+    gender,
+    vehicle_age: vehicleAge,
+    vehicle_type: vehicleType,
+    annual_premium: annualPremium,
+    driving_experience: drivingExperience,
+    accident_history: accidentHistory,
+    claim_history: claimHistory,
+    credit_score: creditScore,
+    policy_duration: policyDuration,
+  }
+);
+
+const mlPrediction = predictionResponse.data.prediction;
+const mlResult = predictionResponse.data.result;
+
     // ✅ CREATE CLAIM
 const newClaim = new Claim({
   userId,
@@ -76,9 +96,10 @@ const newClaim = new Claim({
   claimAmount,
   accidentImage,
 
-  predictionResult: "Pending",
-  fraudRisk: "Under Review",
-  status: "Submitted",
+prediction: mlPrediction,
+predictionResult: mlResult,
+fraudRisk: mlPrediction === 1 ? "Low Risk" : "High Risk",
+status: "Submitted",
 });
     await newClaim.save();
 
