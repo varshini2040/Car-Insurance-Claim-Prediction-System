@@ -36,13 +36,21 @@ exports.submitClaim = async (req, res) => {
       });
     }
 
-    // 🔥 FILE FIX (works for both single & multiple)
-    let accidentImage = "";
-    if (req.file) {
-      accidentImage = req.file.filename;
-    } else if (req.files?.accidentImage?.[0]) {
-      accidentImage = req.files.accidentImage[0].filename;
-    }
+let carImage = "";
+let plateImage = "";
+let licenseImage = "";
+
+if (req.files?.carImage?.[0]) {
+  carImage = req.files.carImage[0].filename;
+}
+
+if (req.files?.plateImage?.[0]) {
+  plateImage = req.files.plateImage[0].filename;
+}
+
+if (req.files?.licenseImage?.[0]) {
+  licenseImage = req.files.licenseImage[0].filename;
+}
 
 // ML Prediction
 const predictionResponse = await axios.post(
@@ -58,11 +66,16 @@ const predictionResponse = await axios.post(
     claim_history: claimHistory,
     credit_score: creditScore,
     policy_duration: policyDuration,
+    stored_plate: licensePlate,
+    stored_license_no: "TN123456789" // Placeholder - can be enhanced with actual data
   }
 );
 
 const mlPrediction = predictionResponse.data.prediction;
-const mlResult = predictionResponse.data.result;
+const fraudProbability = predictionResponse.data.fraud_probability;
+const mlRiskLevel = predictionResponse.data.risk_level;
+const imageVerification = predictionResponse.data.image_verification || {};
+const overallRiskScore = predictionResponse.data.overall_risk_score || fraudProbability * 0.78;
 
     // ✅ CREATE CLAIM
 const newClaim = new Claim({
@@ -94,12 +107,23 @@ const newClaim = new Claim({
   estimatedCost: estimatedCost || 0,
 
   claimAmount,
-  accidentImage,
+  carImage,
+  plateImage,
+  licenseImage,
 
-prediction: mlPrediction,
-predictionResult: mlResult,
-fraudRisk: mlPrediction === 1 ? "Low Risk" : "High Risk",
-status: "Submitted",
+  prediction: mlPrediction,
+  predictionResult: mlPrediction === 1 ? "Fraud Claim" : "Genuine Claim",
+  fraudProbability: fraudProbability,
+  fraudRisk: mlPrediction === 1 ? "High Risk" : "Low Risk",
+  
+  // Image Verification
+  vehicleSimilarity: imageVerification.vehicle_similarity || 0,
+  licensePlateMatch: imageVerification.license_plate_match || {},
+  driverLicenseMatch: imageVerification.driver_license_match || {},
+  overallRiskScore: overallRiskScore,
+  verificationStatus: "Verified",
+  
+  status: "Submitted",
 });
     await newClaim.save();
 

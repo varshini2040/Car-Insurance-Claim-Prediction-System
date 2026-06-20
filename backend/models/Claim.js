@@ -28,7 +28,9 @@ accidentHistory: Number,
 claimHistory: Number,
 creditScore: Number,
 policyDuration: Number,
-    accidentImage: String,
+carImage: String,
+plateImage: String,
+licenseImage: String,
 prediction: {
   type: Number,
   default: 0,
@@ -51,6 +53,41 @@ prediction: {
     modelUsed: {
       type: String,
       default: "random_forest",
+    },
+
+    // Image Verification Fields
+    vehicleSimilarity: {
+      type: Number,
+      default: 0,
+    },
+
+    licensePlateMatch: {
+      type: Object,
+      default: {
+        storedPlate: "",
+        detectedPlate: "",
+        matchPercentage: 0,
+      },
+    },
+
+    driverLicenseMatch: {
+      type: Object,
+      default: {
+        storedLicenseNo: "",
+        detectedLicenseNo: "",
+        matchPercentage: 0,
+      },
+    },
+
+    overallRiskScore: {
+      type: Number,
+      default: 0,
+    },
+
+    verificationStatus: {
+      type: String,
+      enum: ["Pending", "Verified", "Failed"],
+      default: "Pending",
     },
 
     status: {

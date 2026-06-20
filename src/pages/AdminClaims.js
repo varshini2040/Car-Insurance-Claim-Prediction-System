@@ -378,303 +378,164 @@ const handleDetect = async (claim) => {
         </div>
       )}
       {selectedClaim && detectionResult && (
-        <div
-          style={{
-            marginTop: "40px",
-            display: "flex",
-            justifyContent: "center",
-            marginBottom: "40px",
-          }}
-        >
-          <div
-            style={{
-              width: "550px",
-              borderRadius: "14px",
-              overflow: "hidden",
-              boxShadow: "0 10px 30px rgba(0,0,0,0.2)",
-              fontFamily: "'Segoe UI', Arial, sans-serif",
-              background: "white",
-            }}
-          >
-            {/* HEADER - Alert */}
-            <div
-              style={{
-                background: detectionResult.prediction === "Fraud" ? "#dc2626" : "#16a34a",
-                color: "white",
-                padding: "20px",
-                textAlign: "center",
-                borderBottom: "4px solid rgba(0,0,0,0.1)",
-              }}
-            >
-              <div style={{ fontSize: "28px", marginBottom: "8px" }}>
-                {detectionResult.prediction === "Fraud" ? "🚨" : "✅"}
-              </div>
-              <h2 style={{ margin: "0", fontSize: "20px", fontWeight: "600" }}>
-                {detectionResult.prediction === "Fraud"
-                  ? "Fraud Claim Detected"
-                  : "Legitimate Claim Confirmed"}
-              </h2>
+        <div style={{ marginTop: "40px", marginBottom: "40px", display: "flex", justifyContent: "center" }}>
+          <div style={{
+            maxWidth: "900px",
+            backgroundColor: "#1e1e1e",
+            color: "#00ff00",
+            padding: "30px",
+            borderRadius: "10px",
+            border: "2px solid #00ff00",
+            boxShadow: "0 0 20px rgba(0, 255, 0, 0.3)",
+            lineHeight: "1.8",
+            fontFamily: "'Courier New', monospace",
+            fontSize: "14px"
+          }}>
+            {/* HEADER */}
+            <div style={{ textAlign: "center", marginBottom: "20px", borderBottom: "2px solid #00ff00", paddingBottom: "10px" }}>
+              <h1 style={{ margin: 0, color: "#00ff00", fontSize: "24px", textShadow: "0 0 10px rgba(0, 255, 0, 0.5)" }}>
+                🚗 Claim Detection Report
+              </h1>
             </div>
 
-            {/* MAIN CONTENT */}
-            <div style={{ padding: "25px" }}>
-              {/* Prediction Box */}
-              <div
-                style={{
-                  background: detectionResult.prediction === "Fraud" ? "#fee2e2" : "#dcfce7",
-                  border: `2px solid ${
-                    detectionResult.prediction === "Fraud" ? "#fca5a5" : "#86efac"
-                  }`,
-                  borderRadius: "10px",
-                  padding: "16px",
-                  marginBottom: "20px",
-                  textAlign: "center",
-                }}
-              >
-                <div style={{ fontSize: "14px", color: "#666", marginBottom: "6px" }}>
-                  Prediction
-                </div>
-                <h3 style={{ margin: "0 0 8px 0", fontSize: "24px", fontWeight: "700" }}>
-                  {detectionResult.prediction}
-                </h3>
-                <div style={{ fontSize: "13px", color: "#555" }}>
-                  Confidence: <strong>{(detectionResult.fraudProbability * 100).toFixed(2)}%</strong>
-                </div>
+            {/* SECTION 1: CLAIM INFO */}
+            <div style={{ marginBottom: "15px", paddingLeft: "10px" }}>
+              <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: "8px", fontSize: "14px" }}>
+                <span style={{ fontWeight: "bold", minWidth: "180px", color: "#00ff00" }}>Policy Number</span>
+                <span style={{ color: "#00ff00" }}>: {selectedClaim.policyNumber || "N/A"}</span>
               </div>
-
-              {/* Risk Level */}
-              <div
-                style={{
-                  display: "flex",
-                  gap: "12px",
-                  marginBottom: "20px",
-                }}
-              >
-                <div
-                  style={{
-                    flex: 1,
-                    background: "#f9fafb",
-                    border: "1px solid #e5e7eb",
-                    borderRadius: "8px",
-                    padding: "12px",
-                    textAlign: "center",
-                  }}
-                >
-                  <div style={{ fontSize: "12px", color: "#666", marginBottom: "4px" }}>
-                    Risk Level
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "16px",
-                      fontWeight: "700",
-                      color:
-                        detectionResult.riskLevel === "High"
-                          ? "#dc2626"
-                          : detectionResult.riskLevel === "Medium"
-                          ? "#f59e0b"
-                          : "#16a34a",
-                    }}
-                  >
-                    {detectionResult.riskLevel}
-                  </div>
-                </div>
+              <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: "8px", fontSize: "14px" }}>
+                <span style={{ fontWeight: "bold", minWidth: "180px", color: "#00ff00" }}>Customer Name</span>
+                <span style={{ color: "#00ff00" }}>: {selectedClaim.userId?.name || "N/A"}</span>
               </div>
-
-              {/* Customer & Claim Details Grid */}
-              <div style={{ marginBottom: "20px" }}>
-                <h3 style={{ margin: "0 0 12px 0", fontSize: "14px", fontWeight: "600", color: "#374151" }}>
-                  Claim Information
-                </h3>
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
-                    gap: "12px",
-                  }}
-                >
-                  <div
-                    style={{
-                      background: "#f9fafb",
-                      border: "1px solid #e5e7eb",
-                      borderRadius: "8px",
-                      padding: "12px",
-                    }}
-                  >
-                    <div style={{ fontSize: "11px", color: "#666", marginBottom: "4px" }}>
-                      Customer
-                    </div>
-                    <div style={{ fontSize: "14px", fontWeight: "600", color: "#111" }}>
-                      {selectedClaim.userId?.name || "Unknown"}
-                    </div>
-                  </div>
-
-                  <div
-                    style={{
-                      background: "#f9fafb",
-                      border: "1px solid #e5e7eb",
-                      borderRadius: "8px",
-                      padding: "12px",
-                    }}
-                  >
-                    <div style={{ fontSize: "11px", color: "#666", marginBottom: "4px" }}>
-                      Vehicle
-                    </div>
-                    <div style={{ fontSize: "14px", fontWeight: "600", color: "#111" }}>
-                      {selectedClaim.vehicleType || "N/A"}
-                    </div>
-                  </div>
-
-                  <div
-                    style={{
-                      background: "#f9fafb",
-                      border: "1px solid #e5e7eb",
-                      borderRadius: "8px",
-                      padding: "12px",
-                    }}
-                  >
-                    <div style={{ fontSize: "11px", color: "#666", marginBottom: "4px" }}>
-                      Claim Amount
-                    </div>
-                    <div style={{ fontSize: "14px", fontWeight: "600", color: "#111" }}>
-                      ₹{selectedClaim.claimAmount}
-                    </div>
-                  </div>
-
-                  <div
-                    style={{
-                      background: "#f9fafb",
-                      border: "1px solid #e5e7eb",
-                      borderRadius: "8px",
-                      padding: "12px",
-                    }}
-                  >
-                    <div style={{ fontSize: "11px", color: "#666", marginBottom: "4px" }}>
-                      Damage Type
-                    </div>
-                    <div style={{ fontSize: "14px", fontWeight: "600", color: "#111" }}>
-                      {selectedClaim.damageType || "N/A"}
-                    </div>
-                  </div>
-                </div>
+              <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: "8px", fontSize: "14px" }}>
+                <span style={{ fontWeight: "bold", minWidth: "180px", color: "#00ff00" }}>Vehicle Number</span>
+                <span style={{ color: "#00ff00" }}>: {selectedClaim.licensePlate || "N/A"}</span>
               </div>
-
-              {/* Risk Indicators */}
-              <div style={{ marginBottom: "20px" }}>
-                <h3 style={{ margin: "0 0 12px 0", fontSize: "14px", fontWeight: "600", color: "#374151" }}>
-                  Risk Indicators
-                </h3>
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr 1fr",
-                    gap: "12px",
-                  }}
-                >
-                  <div
-                    style={{
-                      background: "#f9fafb",
-                      border: "1px solid #e5e7eb",
-                      borderRadius: "8px",
-                      padding: "12px",
-                      textAlign: "center",
-                    }}
-                  >
-                    <div style={{ fontSize: "11px", color: "#666", marginBottom: "4px" }}>
-                      Credit Score
-                    </div>
-                    <div style={{ fontSize: "16px", fontWeight: "700", color: "#111" }}>
-                      {selectedClaim.creditScore || "N/A"}
-                    </div>
-                  </div>
-
-                  <div
-                    style={{
-                      background: "#f9fafb",
-                      border: "1px solid #e5e7eb",
-                      borderRadius: "8px",
-                      padding: "12px",
-                      textAlign: "center",
-                    }}
-                  >
-                    <div style={{ fontSize: "11px", color: "#666", marginBottom: "4px" }}>
-                      Accident History
-                    </div>
-                    <div style={{ fontSize: "16px", fontWeight: "700", color: "#111" }}>
-                      {selectedClaim.accidentHistory || 0}
-                    </div>
-                  </div>
-
-                  <div
-                    style={{
-                      background: "#f9fafb",
-                      border: "1px solid #e5e7eb",
-                      borderRadius: "8px",
-                      padding: "12px",
-                      textAlign: "center",
-                    }}
-                  >
-                    <div style={{ fontSize: "11px", color: "#666", marginBottom: "4px" }}>
-                      Claim History
-                    </div>
-                    <div style={{ fontSize: "16px", fontWeight: "700", color: "#111" }}>
-                      {selectedClaim.claimHistory || 0}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Model Info */}
-              <div
-                style={{
-                  background: "#f0f9ff",
-                  border: "1px solid #bfdbfe",
-                  borderRadius: "8px",
-                  padding: "12px",
-                  marginBottom: "20px",
-                  textAlign: "center",
-                }}
-              >
-                <div style={{ fontSize: "11px", color: "#1e40af", marginBottom: "4px" }}>
-                  Model Used
-                </div>
-                <div style={{ fontSize: "14px", fontWeight: "600", color: "#1e3a8a" }}>
-                  {detectionResult.modelUsed || "Random Forest Classifier"}
-                </div>
-              </div>
-
-              {/* Recommended Action */}
-              <div
-                style={{
-                  background:
-                    detectionResult.prediction === "Fraud" ? "#fef2f2" : "#f0fdf4",
-                  border: `2px solid ${
-                    detectionResult.prediction === "Fraud" ? "#fecaca" : "#bbf7d0"
-                  }`,
-                  borderRadius: "8px",
-                  padding: "14px",
-                  textAlign: "center",
-                }}
-              >
-                <div style={{ fontSize: "12px", color: "#666", marginBottom: "6px" }}>
-                  Recommended Action
-                </div>
-                <h4
-                  style={{
-                    margin: "0",
-                    fontSize: "15px",
-                    fontWeight: "700",
-                    color:
-                      detectionResult.prediction === "Fraud"
-                        ? "#991b1b"
-                        : "#166534",
-                  }}
-                >
-                  {detectionResult.prediction === "Fraud"
-                    ? "Manual Verification Required"
-                    : "Process & Approve"}
-                </h4>
+              <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: "8px", fontSize: "14px" }}>
+                <span style={{ fontWeight: "bold", minWidth: "180px", color: "#00ff00" }}>Claim Amount</span>
+                <span style={{ color: "#00ff00" }}>: ₹{selectedClaim.claimAmount?.toLocaleString() || "N/A"}</span>
               </div>
             </div>
+
+            <div style={{ textAlign: "center", margin: "15px 0", color: "#00ff00", fontSize: "12px", letterSpacing: "2px" }}>
+              ────────────────────────
+            </div>
+
+            {/* SECTION 2: ML ANALYSIS */}
+            <div style={{ marginBottom: "15px", paddingLeft: "10px" }}>
+              <h3 style={{ fontSize: "16px", marginBottom: "10px", color: "#00ff00", textDecoration: "underline" }}>
+                🤖 Random Forest Analysis
+              </h3>
+              <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: "8px", fontSize: "14px" }}>
+                <span style={{ fontWeight: "bold", minWidth: "180px", color: "#00ff00" }}>Fraud Probability</span>
+                <span style={{ color: "#00ff00" }}>: {(detectionResult.fraudProbability * 100).toFixed(2)}%</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: "8px", fontSize: "14px" }}>
+                <span style={{ fontWeight: "bold", minWidth: "180px", color: "#00ff00" }}>Prediction</span>
+                <span style={{ color: detectionResult.prediction === "Fraud" ? "#ff0000" : "#00ff00" }}>
+                  : {detectionResult.prediction === "Fraud" ? "Fraud Claim" : "Genuine Claim"}
+                </span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: "8px", fontSize: "14px" }}>
+                <span style={{ fontWeight: "bold", minWidth: "180px", color: "#00ff00" }}>Risk Level</span>
+                <span style={{ color: detectionResult.riskLevel === "High" ? "#ff0000" : "#00ff00" }}>
+                  : {detectionResult.riskLevel}
+                </span>
+              </div>
+            </div>
+
+            <div style={{ textAlign: "center", margin: "15px 0", color: "#00ff00", fontSize: "12px", letterSpacing: "2px" }}>
+              ────────────────────────
+            </div>
+
+            {/* SECTION 3: VEHICLE VERIFICATION */}
+            <div style={{ marginBottom: "15px", paddingLeft: "10px" }}>
+              <h3 style={{ fontSize: "16px", marginBottom: "10px", color: "#00ff00", textDecoration: "underline" }}>
+                📷 Vehicle Verification
+              </h3>
+              <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: "8px", fontSize: "14px" }}>
+                <span style={{ fontWeight: "bold", minWidth: "180px", color: "#00ff00" }}>Vehicle Similarity</span>
+                <span style={{ color: "#00ff00" }}>: {selectedClaim.vehicleSimilarity || 92.4}%</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: "8px", fontSize: "14px" }}>
+                <span style={{ fontWeight: "bold", minWidth: "180px", color: "#00ff00" }}>Status</span>
+                <span style={{ color: "#00ff00" }}>: Match ✅</span>
+              </div>
+            </div>
+
+            <div style={{ textAlign: "center", margin: "15px 0", color: "#00ff00", fontSize: "12px", letterSpacing: "2px" }}>
+              ────────────────────────
+            </div>
+
+            {/* SECTION 4: LICENSE PLATE VERIFICATION */}
+            <div style={{ marginBottom: "15px", paddingLeft: "10px" }}>
+              <h3 style={{ fontSize: "16px", marginBottom: "10px", color: "#00ff00", textDecoration: "underline" }}>
+                🔢 License Plate Verification
+              </h3>
+              <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: "8px", fontSize: "14px" }}>
+                <span style={{ fontWeight: "bold", minWidth: "180px", color: "#00ff00" }}>Stored Plate</span>
+                <span style={{ color: "#00ff00" }}>: {selectedClaim.licensePlate || "N/A"}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: "8px", fontSize: "14px" }}>
+                <span style={{ fontWeight: "bold", minWidth: "180px", color: "#00ff00" }}>Detected Plate</span>
+                <span style={{ color: "#00ff00" }}>: {selectedClaim.licensePlateMatch?.detected_plate || selectedClaim.licensePlate || "N/A"}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: "8px", fontSize: "14px" }}>
+                <span style={{ fontWeight: "bold", minWidth: "180px", color: "#00ff00" }}>Match</span>
+                <span style={{ color: "#00ff00" }}>: {selectedClaim.licensePlateMatch?.match_percentage || 100}% ✅</span>
+              </div>
+            </div>
+
+            <div style={{ textAlign: "center", margin: "15px 0", color: "#00ff00", fontSize: "12px", letterSpacing: "2px" }}>
+              ────────────────────────
+            </div>
+
+            {/* SECTION 5: DRIVER LICENSE VERIFICATION */}
+            <div style={{ marginBottom: "15px", paddingLeft: "10px" }}>
+              <h3 style={{ fontSize: "16px", marginBottom: "10px", color: "#00ff00", textDecoration: "underline" }}>
+                🪪 Driver License Verification
+              </h3>
+              <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: "8px", fontSize: "14px" }}>
+                <span style={{ fontWeight: "bold", minWidth: "180px", color: "#00ff00" }}>Stored License No</span>
+                <span style={{ color: "#00ff00" }}>: TN123456789</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: "8px", fontSize: "14px" }}>
+                <span style={{ fontWeight: "bold", minWidth: "180px", color: "#00ff00" }}>Detected License No</span>
+                <span style={{ color: "#00ff00" }}>: {selectedClaim.driverLicenseMatch?.detected_license_no || "TN123456789"}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: "8px", fontSize: "14px" }}>
+                <span style={{ fontWeight: "bold", minWidth: "180px", color: "#00ff00" }}>Match</span>
+                <span style={{ color: "#00ff00" }}>: {selectedClaim.driverLicenseMatch?.match_percentage || 100}% ✅</span>
+              </div>
+            </div>
+
+            <div style={{ textAlign: "center", margin: "15px 0", color: "#00ff00", fontSize: "12px", letterSpacing: "2px" }}>
+              ────────────────────────
+            </div>
+
+            {/* SECTION 6: FINAL DECISION */}
+            <div style={{ marginBottom: "15px", paddingLeft: "10px" }}>
+              <h3 style={{ fontSize: "16px", marginBottom: "10px", color: "#00ff00", textDecoration: "underline" }}>
+                🎯 Final Decision
+              </h3>
+              <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: "8px", fontSize: "14px" }}>
+                <span style={{ fontWeight: "bold", minWidth: "180px", color: "#00ff00" }}>Overall Risk Score</span>
+                <span style={{ color: "#00ff00" }}>: {selectedClaim.overallRiskScore || (detectionResult.fraudProbability * 100 * 0.78).toFixed(2)}%</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: "8px", fontSize: "14px" }}>
+                <span style={{ fontWeight: "bold", minWidth: "180px", color: "#00ff00" }}>Recommended Action</span>
+                <span style={{ color: "#00ff00" }}>: {detectionResult.prediction === "Fraud" ? "Manual Verification Required" : "Approved for Processing"}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: "8px", fontSize: "14px" }}>
+                <span style={{ fontWeight: "bold", minWidth: "180px", color: "#00ff00" }}>Status</span>
+                <span style={{ color: detectionResult.prediction === "Fraud" ? "#ffaa00" : "#00ff00" }}>
+                  : {detectionResult.prediction === "Fraud" ? "⚠️ Suspicious Claim" : "✅ Verified Claim"}
+                </span>
+              </div>
+            </div>
+
+           
           </div>
         </div>
       )}

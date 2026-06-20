@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const Predict = () => {
+  const navigate = useNavigate();
   const user = JSON.parse(localStorage.getItem("user"));
 
   const [formData, setFormData] = useState({
@@ -28,9 +30,10 @@ policyDuration: ""
   });
 
   
-  const [accidentImage, setAccidentImage] = useState(null);
-  const [result, setResult] = useState("");
-  const [status, setStatus] = useState("");
+const [carImage, setCarImage] = useState(null);
+const [plateImage, setPlateImage] = useState(null);
+const [licenseImage, setLicenseImage] = useState(null);
+
 
   useEffect(() => {
     if (user) {
@@ -53,12 +56,26 @@ policyDuration: ""
     });
   };
 
-  // ============================
-  // HANDLE IMAGE
-  // ============================
-  const handleImageChange = (e) => {
-    setAccidentImage(e.target.files[0]);
-  };
+ // ============================
+// HANDLE CAR IMAGE
+// ============================
+const handleCarImageChange = (e) => {
+  setCarImage(e.target.files[0]);
+};
+
+// ============================
+// HANDLE PLATE IMAGE
+// ============================
+const handlePlateImageChange = (e) => {
+  setPlateImage(e.target.files[0]);
+};
+
+// ============================
+// HANDLE LICENSE IMAGE
+// ============================
+const handleLicenseImageChange = (e) => {
+  setLicenseImage(e.target.files[0]);
+};
 
   // ============================
   // SUBMIT CLAIM
@@ -101,11 +118,9 @@ data.append("accidentHistory", formData.accidentHistory);
 data.append("claimHistory", formData.claimHistory);
 data.append("creditScore", formData.creditScore);
 data.append("policyDuration", formData.policyDuration);
-
-      // 🔥 optional image (comment if error)
-      if (accidentImage) {
-        data.append("accidentImage", accidentImage);
-      }
+data.append("carImage", carImage);
+data.append("plateImage", plateImage);
+data.append("licenseImage", licenseImage);
 
       const res = await axios.post(
         "http://localhost:5000/api/claims/submit",
@@ -119,8 +134,14 @@ data.append("policyDuration", formData.policyDuration);
 
       alert("✅ Claim submitted successfully");
 
-      setResult(res.data.claim.predictionResult);
-      setStatus(res.data.claim.status);
+      // Store complete claim result in localStorage
+      localStorage.setItem("predictionResult", JSON.stringify(res.data.claim));
+      
+     
+      // Navigate to results page
+      setTimeout(() => {
+        navigate("/results");
+      }, 1000);
 
     } catch (err) {
       console.log("ERROR:", err.response?.data || err.message);
@@ -307,16 +328,67 @@ data.append("policyDuration", formData.policyDuration);
   </div>
 </div>
 
-          {/* Upload Section */}
-          <div style={styles.section}>
-            <h3 style={styles.sectionTitle}>Upload Evidence</h3>
-            <input type="file" accept="image/*" onChange={handleImageChange} style={styles.fileInput}/>
-            
-            {accidentImage && (
-              <img src={URL.createObjectURL(accidentImage)} alt="preview" style={styles.preview}/>
-              
-            )}
-          </div>
+         {/* Upload Section */}
+<div style={styles.section}>
+  <h3 style={styles.sectionTitle}>Upload Evidence</h3>
+
+  {/* Accident Car Image */}
+  <div style={{ marginBottom: "15px" }}>
+    <label><strong>Accident Car Image</strong></label>
+    <input
+      type="file"
+      accept="image/*"
+      onChange={(e) => setCarImage(e.target.files[0])}
+      style={styles.fileInput}
+    />
+
+    {carImage && (
+      <img
+        src={URL.createObjectURL(carImage)}
+        alt="Car Preview"
+        style={styles.preview}
+      />
+    )}
+  </div>
+
+  {/* Number Plate Image */}
+  <div style={{ marginBottom: "15px" }}>
+    <label><strong>Number Plate Image</strong></label>
+    <input
+      type="file"
+      accept="image/*"
+      onChange={(e) => setPlateImage(e.target.files[0])}
+      style={styles.fileInput}
+    />
+
+    {plateImage && (
+      <img
+        src={URL.createObjectURL(plateImage)}
+        alt="Plate Preview"
+        style={styles.preview}
+      />
+    )}
+  </div>
+
+  {/* Driving License Image */}
+  <div style={{ marginBottom: "15px" }}>
+    <label><strong>Driver's License Image</strong></label>
+    <input
+      type="file"
+      accept="image/*"
+      onChange={(e) => setLicenseImage(e.target.files[0])}
+      style={styles.fileInput}
+    />
+
+    {licenseImage && (
+      <img
+        src={URL.createObjectURL(licenseImage)}
+        alt="License Preview"
+        style={styles.preview}
+      />
+    )}
+  </div>
+</div>
 
           <button
   type="submit"
@@ -337,12 +409,7 @@ data.append("policyDuration", formData.policyDuration);
 </button>
         </form>
 
-        {result && (
-          <div style={styles.output}>
-            <h3>✅ {result}</h3>
-            <p>Status: {status}</p>
-          </div>
-        )}
+        
       </div>
     </div>
   );

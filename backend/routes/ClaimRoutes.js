@@ -12,7 +12,15 @@ const {
 const { predictClaim } = require("../controllers/predictController");
 
 // User Submit Claim
-router.post("/submit", upload.single("accidentImage"), submitClaim);
+router.post(
+  "/submit",
+  upload.fields([
+    { name: "carImage", maxCount: 1 },
+    { name: "plateImage", maxCount: 1 },
+    { name: "licenseImage", maxCount: 1 }
+  ]),
+  submitClaim
+);
 
 // ML Fraud Detection (Admin use)
 router.post("/predict", predictClaim);

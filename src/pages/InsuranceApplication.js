@@ -25,7 +25,7 @@ phone: '',
     vehicleFront: null,
     vehicleBack: null,
     vehicleSide: null,
-    
+    vehicleNumberPlate: null,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -104,6 +104,7 @@ const handleSubmit = async (e) => {
         vehicleFront: null,
         vehicleBack: null,
         vehicleSide: null,
+        vehicleNumberPlate: null,
       });
     }
 
@@ -415,6 +416,18 @@ const handleSubmit = async (e) => {
                 <small style={styles.helpText}>JPG, PNG (Max 5MB)</small>
               </div>
 
+<div style={styles.documentGroup}>
+                <label style={styles.label}>Vehicle Number Plate *</label>
+                <input
+                  type="file"
+                  name="vehicleNumberPlate"
+                  onChange={handleFileChange}
+                  accept="image/*"
+                  required
+                  style={styles.fileInput}
+                />
+                <small style={styles.helpText}>JPG, PNG (Max 5MB)</small>
+              </div>
               
             </div>
           </div>

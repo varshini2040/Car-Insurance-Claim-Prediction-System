@@ -22,6 +22,7 @@ const insuranceSchema = new mongoose.Schema({
   vehicleFront: String,
   vehicleBack: String,
   vehicleSide: String,
+  vehicleNumberPlate: String,
 
 
   status: { type: String, default: "pending" },

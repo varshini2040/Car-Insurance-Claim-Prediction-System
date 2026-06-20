@@ -15,6 +15,9 @@ exports.applyInsurance = async (req, res) => {
   try {
     const User = require("../models/User");
 
+     console.log("BODY:", req.body);
+    console.log("FILES:", req.files);
+    
     // 🔥 CHANGE HERE
     const policyNumber = req.body.policyNumber || generatePolicyNumber();
     const licensePlate = req.body.licensePlate;
@@ -29,6 +32,7 @@ exports.applyInsurance = async (req, res) => {
       vehicleFront: req.files?.vehicleFront?.[0]?.filename,
       vehicleBack: req.files?.vehicleBack?.[0]?.filename,
       vehicleSide: req.files?.vehicleSide?.[0]?.filename,
+      vehicleNumberPlate: req.files?.vehicleNumberPlate?.[0]?.filename,
     });
 
     await newInsurance.save();
