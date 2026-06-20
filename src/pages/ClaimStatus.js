@@ -28,7 +28,7 @@ const ClaimStatus = () => {
       {claim && (
         <div>
           <h3>Status: {claim.status}</h3>
-          <h3>Prediction: {claim.predictionResult}</h3>
+
           <h3>Claim Amount: ₹{claim.claimAmount}</h3>
         </div>
       )}

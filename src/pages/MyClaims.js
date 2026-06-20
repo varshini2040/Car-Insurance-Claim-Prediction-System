@@ -48,11 +48,10 @@ const MyClaims = () => {
                 <span style={styles.status}>{c.status}</span>
               </p>
 
-              <p>
-                <b>Prediction:</b> {c.predictionResult}
-              </p>
+
 
               {/* Accident Image */}
+
               {c.accidentImage && (
                 <img
                   src={`http://localhost:5000/uploads/${c.accidentImage}`}

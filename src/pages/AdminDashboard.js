@@ -1,5 +1,21 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { getStatusStats, normalizeStatus } from "../utils/status";
+
+const percent = (value) =>
+  Number.isFinite(Number(value)) ? `${Number(value).toFixed(2)}%` : "Unavailable";
+
+const claimCustomerName = (claim) =>
+  claim?.userName || claim?.userId?.name || "Unavailable";
+
+const claimCustomerEmail = (claim) =>
+  claim?.userEmail || claim?.userId?.email || "Unavailable";
+
+const normalizeClaim = (claim = {}) => ({
+  ...claim,
+  userName: claimCustomerName(claim),
+  userEmail: claimCustomerEmail(claim),
+});
 
 const AdminDashboard = () => {
   const [insuranceApps, setInsuranceApps] = useState([]);
@@ -8,7 +24,9 @@ const AdminDashboard = () => {
   const [selectedInsurance, setSelectedInsurance] = useState(null);
   const [selectedClaim, setSelectedClaim] = useState(null);
   const [insuranceResult, setInsuranceResult] = useState(null);
-  const [claimResult, setClaimResult] = useState(null); // Object: { prediction, fraudProbability, riskLevel, modelUsed }
+  const [claimResult, setClaimResult] = useState(null);
+  const [openingClaimId, setOpeningClaimId] = useState(null);
+  const [detectingClaimId, setDetectingClaimId] = useState(null);
 
   
   // ============================
@@ -26,7 +44,29 @@ const AdminDashboard = () => {
 
   const loadClaims = async () => {
     const res = await axios.get("http://localhost:5000/api/claims/all");
-    setClaims(res.data);
+    setClaims(res.data.map(normalizeClaim));
+  };
+
+  const openClaim = async (claim) => {
+    if (!claim?._id) return;
+
+    setOpeningClaimId(claim._id);
+    setClaimResult(null);
+
+    try {
+      const res = await axios.get(`http://localhost:5000/api/claims/${claim._id}`);
+      const latestClaim = normalizeClaim(res.data?.claim || res.data || claim);
+      setSelectedClaim(latestClaim);
+      setClaims((current) =>
+        current.map((item) => (item._id === latestClaim._id ? latestClaim : item))
+      );
+    } catch (err) {
+      console.log("Open claim error:", err.response?.data || err.message);
+      setSelectedClaim(normalizeClaim(claim));
+      alert(err.response?.data?.message || "Could not load latest claim details");
+    } finally {
+      setOpeningClaimId(null);
+    }
   };
 
   // ============================
@@ -60,74 +100,62 @@ const predictInsurance = (app) => {
 };
 
 // Detect Claim - ML INTEGRATED
-const predictClaim = async (claim) => {
+const detectClaim = async (claim) => {
+  if (!claim?._id) return;
+
+  // Clear previous report/result
+  setClaimResult(null);
+  setDetectingClaimId(claim._id);
+
   try {
-    // Extract all 10 ML features from claim
-    const mlPayload = {
-      age: Number(claim.age) || 30,
-      gender: claim.gender || "Male",
-      vehicle_age: Number(claim.vehicleAge) || 5,
-      vehicle_type: claim.vehicleType || "Sedan",
-      annual_premium: Number(claim.annualPremium) || 50000,
-      driving_experience: Number(claim.drivingExperience) || 5,
-      accident_history: Number(claim.accidentHistory) || 0,
-      claim_history: Number(claim.claimHistory) || 0,
-      credit_score: Number(claim.creditScore) || 700,
-      policy_duration: Number(claim.policyDuration) || 2,
-      userId: claim.userId?._id,
-      policyNumber: claim.policyNumber,
-      claimId: claim._id
-    };
-
-    console.log("📊 Sending to ML API:", mlPayload);
-
-    // Call ML prediction endpoint
-    const response = await axios.post(
-      "http://localhost:5000/api/claims/predict",
-      mlPayload,
-      { timeout: 15000 }
+    const res = await axios.post(
+      `http://localhost:5000/api/claims/${claim._id}/detect`
     );
 
-    console.log("✅ ML Response:", response.data);
-
-    // Determine risk level based on fraud probability
-    let riskLevel = "Low";
-    if (response.data.fraudProbability > 0.7) {
-      riskLevel = "High";
-    } else if (response.data.fraudProbability > 0.3) {
-      riskLevel = "Medium";
-    }
-
+    // Admin should see full detection data only after clicking Detect.
+    // Store the ML response subset needed for rendering.
+    const report = res.data?.detectionReport || {};
+    const updatedClaim = res.data?.claim;
     setClaimResult({
-      prediction: response.data.prediction === 1 ? "Fraud" : "Legitimate",
-      fraudProbability: response.data.fraudProbability || 0,
-      riskLevel: riskLevel,
-      modelUsed: response.data.modelUsed || "best_insurance_model"
+      fraud: report.fraud_detection || {},
+      verification: report.image_verification || {},
+      plateOcr: report.plate_ocr || updatedClaim?.plateOcr || {},
+      licenseOcr: report.license_ocr || updatedClaim?.licenseOcr || {},
+      decision: report.final_decision || {},
+      referenceImages: report.reference_images || {},
+      claimSummary: report.policy_holder || {},
+      fileWarnings: report.file_warnings || [],
     });
-
-  } catch (error) {
-    console.error("❌ Prediction Error:", error.message);
-    alert(`❌ Error: ${error.response?.data?.error || error.message}`);
-    setClaimResult(null);
+    if (updatedClaim) {
+      setSelectedClaim((current) => normalizeClaim({ ...current, ...updatedClaim }));
+      setClaims((current) =>
+        current.map((item) =>
+          item._id === updatedClaim._id ? normalizeClaim({ ...item, ...updatedClaim }) : item
+        )
+      );
+    }
+  } catch (err) {
+    console.log("Detect claim error:", err.response?.data || err.message);
+    alert(err.response?.data?.message || "Detection failed");
+  } finally {
+    setDetectingClaimId(null);
   }
 };
+
 
   // ============================
   // STATS
   // ============================
-  const getStats = (data) => ({
-    total: data.length,
-    approved: data.filter((x) => x.status === "approved").length,
-    pending: data.filter((x) => x.status === "pending").length,
-    rejected: data.filter((x) => x.status === "rejected").length,
-    notdetected: data.filter((x) => x.status === "notdetected").length,
-  });
-
-  const insuranceStats = getStats(insuranceApps);
-  const claimStats = getStats(claims);
+  const insuranceStats = getStatusStats(insuranceApps);
+  const claimStats = getStatusStats(claims);
 
   return (
     <div style={styles.page}>
+      <style>{`
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
       <h1 style={styles.mainTitle}>Admin Dashboard</h1>
       <p style={styles.subtitle}>
         Manage Applied Insurance & Claim Submissions
@@ -230,9 +258,9 @@ const predictClaim = async (claim) => {
         <td style={styles.td}>{c.policyNumber}</td>
 
         <td style={styles.td}>
-          <b>{c.userId?.name}</b><br />
+          <b>{claimCustomerName(c)}</b><br />
           <span style={{ color: "gray", fontSize: "12px" }}>
-            {c.userId?.email}
+            {claimCustomerEmail(c)}
           </span>
         </td>
 
@@ -249,12 +277,10 @@ const predictClaim = async (claim) => {
         <td>
                 <button
                   style={styles.viewBtn}
-                  onClick={() => {
-                    setSelectedClaim(c);
-                    setClaimResult(null); // Clear previous result
-                  }}
+                  onClick={() => openClaim(c)}
+                  disabled={openingClaimId === c._id}
                 >
-                  👁 View
+                  {openingClaimId === c._id ? "Loading..." : "👁 View"}
                 </button>
               </td>
       </tr>
@@ -386,12 +412,7 @@ const predictClaim = async (claim) => {
 
           {/* Approve Reject */}
           <div style={styles.modalActions}>
-           <button
-    style={styles.predictBtn}
-    onClick={() => predictInsurance(selectedInsurance)}
-  >
-    Detect
-  </button>
+          
            
             <button
               style={styles.approveBtn}
@@ -427,8 +448,14 @@ const predictClaim = async (claim) => {
       {selectedClaim && (
         <Modal close={() => setSelectedClaim(null)}>
           <h2>Claim Details</h2>
+
+          <h3 style={styles.modalSectionTitle}>Customer Information</h3>
+          <p><b>Customer Name:</b> {claimCustomerName(selectedClaim)}</p>
+          <p><b>Customer Email:</b> {claimCustomerEmail(selectedClaim)}</p>
           <p><b>Policy Number:</b> {selectedClaim.policyNumber}</p>
-<p><b>License Plate:</b> {selectedClaim.licensePlate}</p>
+          
+
+          <h3 style={styles.modalSectionTitle}>Claim Information</h3>
 
 <p><b>Age:</b> {selectedClaim.age}</p>
 <p><b>Gender:</b> {selectedClaim.gender}</p>
@@ -458,8 +485,7 @@ const predictClaim = async (claim) => {
 <p><b>Estimated Cost:</b> ₹{selectedClaim.estimatedCost}</p>
 <p><b>Claim Amount:</b> ₹{selectedClaim.claimAmount}</p>
 
-<p><b>Prediction Result:</b> {selectedClaim.predictionResult}</p>
-<p><b>Fraud Risk:</b> {selectedClaim.fraudRisk}</p>
+
 <p><b>Status:</b> {selectedClaim.status}</p>
           
 {/* Accident Car Image */}
@@ -499,188 +525,42 @@ const predictClaim = async (claim) => {
 )}
       
 {claimResult && (
-  <div style={{ marginTop: "40px", marginBottom: "40px", display: "flex", justifyContent: "center" }}>
-    <div style={{
-      maxWidth: "900px",
-      backgroundColor: "#1e1e1e",
-      color: "#00ff00",
-      padding: "30px",
-      borderRadius: "10px",
-      border: "2px solid #00ff00",
-      boxShadow: "0 0 20px rgba(0, 255, 0, 0.3)",
-      lineHeight: "1.8",
-      fontFamily: "'Courier New', monospace",
-      fontSize: "14px",
-      width: "100%"
-    }}>
-      {/* HEADER */}
-      <div style={{ textAlign: "center", marginBottom: "20px", borderBottom: "2px solid #00ff00", paddingBottom: "10px" }}>
-        <h1 style={{ margin: 0, color: "#00ff00", fontSize: "24px", textShadow: "0 0 10px rgba(0, 255, 0, 0.5)" }}>
-          🚗 Claim Detection Report
-        </h1>
-      </div>
-
-      {/* SECTION 1: CLAIM INFO */}
-      <div style={{ marginBottom: "15px", paddingLeft: "10px" }}>
-        <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: "8px", fontSize: "14px" }}>
-          <span style={{ fontWeight: "bold", minWidth: "180px", color: "#00ff00" }}>Policy Number</span>
-          <span style={{ color: "#00ff00" }}>: {selectedClaim.policyNumber || "N/A"}</span>
-        </div>
-        <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: "8px", fontSize: "14px" }}>
-          <span style={{ fontWeight: "bold", minWidth: "180px", color: "#00ff00" }}>Customer Name</span>
-          <span style={{ color: "#00ff00" }}>: {selectedClaim.userId?.name || "N/A"}</span>
-        </div>
-        <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: "8px", fontSize: "14px" }}>
-          <span style={{ fontWeight: "bold", minWidth: "180px", color: "#00ff00" }}>Vehicle Number</span>
-          <span style={{ color: "#00ff00" }}>: {selectedClaim.licensePlate || "N/A"}</span>
-        </div>
-        <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: "8px", fontSize: "14px" }}>
-          <span style={{ fontWeight: "bold", minWidth: "180px", color: "#00ff00" }}>Claim Amount</span>
-          <span style={{ color: "#00ff00" }}>: ₹{selectedClaim.claimAmount?.toLocaleString() || "N/A"}</span>
-        </div>
-      </div>
-
-      <div style={{ textAlign: "center", margin: "15px 0", color: "#00ff00", fontSize: "12px", letterSpacing: "2px" }}>
-        ────────────────────────
-      </div>
-
-      {/* SECTION 2: ML ANALYSIS */}
-      <div style={{ marginBottom: "15px", paddingLeft: "10px" }}>
-        <h3 style={{ fontSize: "16px", marginBottom: "10px", color: "#00ff00", textDecoration: "underline" }}>
-          🤖 Random Forest Analysis
-        </h3>
-        <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: "8px", fontSize: "14px" }}>
-          <span style={{ fontWeight: "bold", minWidth: "180px", color: "#00ff00" }}>Fraud Probability</span>
-          <span style={{ color: "#00ff00" }}>: {(claimResult.fraudProbability * 100).toFixed(2)}%</span>
-        </div>
-        <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: "8px", fontSize: "14px" }}>
-          <span style={{ fontWeight: "bold", minWidth: "180px", color: "#00ff00" }}>Prediction</span>
-          <span style={{ color: claimResult.prediction === "Fraud" ? "#ff0000" : "#00ff00" }}>
-            : {claimResult.prediction === "Fraud" ? "Fraud Claim" : "Genuine Claim"}
-          </span>
-        </div>
-        <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: "8px", fontSize: "14px" }}>
-          <span style={{ fontWeight: "bold", minWidth: "180px", color: "#00ff00" }}>Risk Level</span>
-          <span style={{ color: claimResult.riskLevel === "High" ? "#ff0000" : "#00ff00" }}>
-            : {claimResult.riskLevel}
-          </span>
-        </div>
-      </div>
-
-      <div style={{ textAlign: "center", margin: "15px 0", color: "#00ff00", fontSize: "12px", letterSpacing: "2px" }}>
-        ────────────────────────
-      </div>
-
-      {/* SECTION 3: VEHICLE VERIFICATION */}
-      <div style={{ marginBottom: "15px", paddingLeft: "10px" }}>
-        <h3 style={{ fontSize: "16px", marginBottom: "10px", color: "#00ff00", textDecoration: "underline" }}>
-          📷 Vehicle Verification
-        </h3>
-        <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: "8px", fontSize: "14px" }}>
-          <span style={{ fontWeight: "bold", minWidth: "180px", color: "#00ff00" }}>Vehicle Similarity</span>
-          <span style={{ color: "#00ff00" }}>: {selectedClaim.vehicleSimilarity || 92.4}%</span>
-        </div>
-        <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: "8px", fontSize: "14px" }}>
-          <span style={{ fontWeight: "bold", minWidth: "180px", color: "#00ff00" }}>Status</span>
-          <span style={{ color: "#00ff00" }}>: Match ✅</span>
-        </div>
-      </div>
-
-      <div style={{ textAlign: "center", margin: "15px 0", color: "#00ff00", fontSize: "12px", letterSpacing: "2px" }}>
-        ────────────────────────
-      </div>
-
-      {/* SECTION 4: LICENSE PLATE VERIFICATION */}
-      <div style={{ marginBottom: "15px", paddingLeft: "10px" }}>
-        <h3 style={{ fontSize: "16px", marginBottom: "10px", color: "#00ff00", textDecoration: "underline" }}>
-          🔢 License Plate Verification
-        </h3>
-        <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: "8px", fontSize: "14px" }}>
-          <span style={{ fontWeight: "bold", minWidth: "180px", color: "#00ff00" }}>Stored Plate</span>
-          <span style={{ color: "#00ff00" }}>: {selectedClaim.licensePlate || "N/A"}</span>
-        </div>
-        <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: "8px", fontSize: "14px" }}>
-          <span style={{ fontWeight: "bold", minWidth: "180px", color: "#00ff00" }}>Detected Plate</span>
-          <span style={{ color: "#00ff00" }}>: {selectedClaim.licensePlateMatch?.detected_plate || selectedClaim.licensePlate || "N/A"}</span>
-        </div>
-        <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: "8px", fontSize: "14px" }}>
-          <span style={{ fontWeight: "bold", minWidth: "180px", color: "#00ff00" }}>Match</span>
-          <span style={{ color: "#00ff00" }}>: {selectedClaim.licensePlateMatch?.match_percentage || 100}% ✅</span>
-        </div>
-      </div>
-
-      <div style={{ textAlign: "center", margin: "15px 0", color: "#00ff00", fontSize: "12px", letterSpacing: "2px" }}>
-        ────────────────────────
-      </div>
-
-      {/* SECTION 5: DRIVER LICENSE VERIFICATION */}
-      <div style={{ marginBottom: "15px", paddingLeft: "10px" }}>
-        <h3 style={{ fontSize: "16px", marginBottom: "10px", color: "#00ff00", textDecoration: "underline" }}>
-          🪪 Driver License Verification
-        </h3>
-        <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: "8px", fontSize: "14px" }}>
-          <span style={{ fontWeight: "bold", minWidth: "180px", color: "#00ff00" }}>Stored License No</span>
-          <span style={{ color: "#00ff00" }}>: TN123456789</span>
-        </div>
-        <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: "8px", fontSize: "14px" }}>
-          <span style={{ fontWeight: "bold", minWidth: "180px", color: "#00ff00" }}>Detected License No</span>
-          <span style={{ color: "#00ff00" }}>: {selectedClaim.driverLicenseMatch?.detected_license_no || "TN123456789"}</span>
-        </div>
-        <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: "8px", fontSize: "14px" }}>
-          <span style={{ fontWeight: "bold", minWidth: "180px", color: "#00ff00" }}>Match</span>
-          <span style={{ color: "#00ff00" }}>: {selectedClaim.driverLicenseMatch?.match_percentage || 100}% ✅</span>
-        </div>
-      </div>
-
-      <div style={{ textAlign: "center", margin: "15px 0", color: "#00ff00", fontSize: "12px", letterSpacing: "2px" }}>
-        ────────────────────────
-      </div>
-
-      {/* SECTION 6: FINAL DECISION */}
-      <div style={{ marginBottom: "15px", paddingLeft: "10px" }}>
-        <h3 style={{ fontSize: "16px", marginBottom: "10px", color: "#00ff00", textDecoration: "underline" }}>
-          🎯 Final Decision
-        </h3>
-        <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: "8px", fontSize: "14px" }}>
-          <span style={{ fontWeight: "bold", minWidth: "180px", color: "#00ff00" }}>Overall Risk Score</span>
-          <span style={{ color: "#00ff00" }}>: {selectedClaim.overallRiskScore || (claimResult.fraudProbability * 100 * 0.78).toFixed(2)}%</span>
-        </div>
-        <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: "8px", fontSize: "14px" }}>
-          <span style={{ fontWeight: "bold", minWidth: "180px", color: "#00ff00" }}>Recommended Action</span>
-          <span style={{ color: "#00ff00" }}>: {claimResult.prediction === "Fraud" ? "Manual Verification Required" : "Approved for Processing"}</span>
-        </div>
-        <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: "8px", fontSize: "14px" }}>
-          <span style={{ fontWeight: "bold", minWidth: "180px", color: "#00ff00" }}>Status</span>
-          <span style={{ color: claimResult.prediction === "Fraud" ? "#ffaa00" : "#00ff00" }}>
-            : {claimResult.prediction === "Fraud" ? "⚠️ Suspicious Claim" : "✅ Verified Claim"}
-          </span>
-        </div>
-      </div>
-
-      
-     
+  <ClaimDetectionResultCard claim={selectedClaim} result={claimResult} />
+)}
+{detectingClaimId === selectedClaim._id && (
+  <div style={styles.detectingNotice}>
+    <div style={styles.spinner} />
+    <div>
+      <b>Detecting claim...</b>
+      <p style={styles.detectingText}>
+        Fraud analysis and image verification are running. This can take a few seconds.
+      </p>
     </div>
   </div>
 )}
           {/* Approve Reject */}
           <div style={styles.modalActions}>
             <button
-  style={styles.predictBtn}
-  onClick={() => predictClaim(selectedClaim)}
+  style={{
+    ...styles.predictBtn,
+    ...(detectingClaimId === selectedClaim._id ? styles.disabledBtn : {}),
+  }}
+  onClick={() => detectClaim(selectedClaim)}
+  disabled={detectingClaimId === selectedClaim._id}
 >
-  Detect
+  {detectingClaimId === selectedClaim._id ? "Detecting..." : "Detect"}
 </button>
            
             <button
               style={styles.approveBtn}
-              onClick={() => updateClaimStatus(selectedClaim._id, "approved")}
+              onClick={() => updateClaimStatus(selectedClaim._id, "Approved")}
             >
               Approve
             </button>
 
             <button
               style={styles.rejectBtn}
-              onClick={() => updateClaimStatus(selectedClaim._id, "rejected")}
+              onClick={() => updateClaimStatus(selectedClaim._id, "Rejected")}
             >
               Reject
             </button>   
@@ -742,6 +622,195 @@ const Box = ({ title, children }) => (
   </div>
 );
 
+const resultValue = (value) =>
+  value === undefined || value === null || value === "" ? "Unavailable" : value;
+
+const matchText = (match) =>
+  match === undefined || match === null ? "Unavailable" : match ? "Match" : "Mismatch";
+
+const vehicleConditionNote = (vehicle = {}) => {
+  if (vehicle.match === false) {
+    return "Different vehicle detected";
+  }
+
+  const similarity = Number(vehicle.similarity);
+  const visualSimilarity = Number(vehicle.visual_similarity);
+  const hasLowerVisualScore =
+    Number.isFinite(visualSimilarity)
+      ? visualSimilarity < 75
+      : Number.isFinite(similarity) && similarity < 75;
+
+  if (vehicle.match && (vehicle.plate_identity_confirmed || hasLowerVisualScore)) {
+    return "Same vehicle, damaged condition detected";
+  }
+
+  return null;
+};
+
+const joinMessages = (messages = []) =>
+  Array.isArray(messages) && messages.length ? messages.join("; ") : null;
+
+const ResultRow = ({ label, value }) => (
+  <div style={claimResultStyles.row}>
+    <span style={claimResultStyles.label}>{label}</span>
+    <span style={claimResultStyles.value}>{resultValue(value)}</span>
+  </div>
+);
+
+const ResultSection = ({ title, children }) => (
+  <section style={claimResultStyles.section}>
+    <h3 style={claimResultStyles.sectionTitle}>{title}</h3>
+    {children}
+  </section>
+);
+
+const ResultImage = ({ label, file }) => {
+  if (!file) return null;
+
+  return (
+    <div style={claimResultStyles.imageBox}>
+      <span style={claimResultStyles.imageLabel}>{label}</span>
+      <img
+        src={`http://localhost:5000/uploads/${file}`}
+        alt={label}
+        style={claimResultStyles.image}
+      />
+    </div>
+  );
+};
+
+const ClaimDetectionResultCard = ({ claim, result }) => {
+  const fraudLabel =
+    result.fraud?.prediction_label === "Fraud" ? "Fraud Claim" : "Genuine Claim";
+  const claimSummary = result.claimSummary || {};
+  const detectedPlate =
+    result.plateOcr?.detected_plate ?? result.plateOcr?.detectedPlate;
+  const insuredPlate =
+    claimSummary.insurance_plate ??
+    result.plateOcr?.insured_plate ??
+    result.plateOcr?.insuredPlate;
+  const plateMatch =
+    result.plateOcr?.match_percentage ?? result.plateOcr?.matchPercentage;
+  const licenseOcr = result.licenseOcr || {};
+  const licenseMatch =
+    licenseOcr.match_percentage ?? licenseOcr.matchPercentage;
+  const referenceImages = result.referenceImages || {};
+  const vehicle = result.verification?.vehicle || {};
+  const vehicleNote = vehicleConditionNote(vehicle);
+  const submittedClaimPlate =
+    claimSummary.claim_license_plate ||
+    result.plateOcr?.submitted_claim_plate ||
+    result.plateOcr?.submittedClaimPlate ||
+    claim?.licensePlate;
+  const plateMismatch = joinMessages(
+    result.verification?.plate?.mismatch_reasons ||
+      result.plateOcr?.mismatch_reasons ||
+      result.plateOcr?.mismatchReasons
+  );
+  const fileWarnings = joinMessages(result.fileWarnings);
+
+  return (
+    <div style={claimResultStyles.wrap}>
+      <div style={claimResultStyles.card}>
+        <h1 style={claimResultStyles.title}>Claim detection completed</h1>
+        <p style={claimResultStyles.subtitle}>
+          Image verification and fraud analysis were generated for this claim.
+        </p>
+
+        <ResultSection title="Claim Summary">
+          <ResultRow label="Customer Name" value={claimSummary.name || claimCustomerName(claim)} />
+          <ResultRow label="Policy Number" value={claimSummary.policy_number || claim?.policyNumber} />
+          <ResultRow label="Claim Amount" value={claimSummary.claim_amount || claim?.claimAmount} />
+          <ResultRow label="Claim Vehicle Number" value={submittedClaimPlate} />
+          <ResultRow label="Policy Vehicle Number" value={insuredPlate} />
+        </ResultSection>
+
+        <ResultSection title="🤖 Fraud Detection">
+          <ResultRow label="Fraud Probability" value={percent(result.fraud?.fraud_probability)} />
+          <ResultRow label="Prediction" value={fraudLabel} />
+          <ResultRow label="Risk Level" value={result.fraud?.risk_level} />
+        </ResultSection>
+
+        <ResultSection title="🚗 Vehicle Verification">
+          <div style={claimResultStyles.imageGrid}>
+            <ResultImage
+              label="Insurance Vehicle Image"
+              file={
+                referenceImages.insurance_vehicle_front ||
+                referenceImages.insurance_vehicle ||
+                referenceImages.insurance_vehicle_back ||
+                referenceImages.insurance_vehicle_side
+              }
+            />
+            <ResultImage label="Claim Vehicle Image" file={referenceImages.claim_vehicle} />
+          </div>
+          <ResultRow label="Similarity" value={percent(vehicle.similarity)} />
+          <ResultRow label="Visual Similarity" value={percent(vehicle.visual_similarity)} />
+          <ResultRow label="Result" value={matchText(vehicle.match)} />
+          {vehicleNote && <ResultRow label="Note" value={vehicleNote} />}
+        </ResultSection>
+
+        <ResultSection title="🔢 Number Plate Verification">
+          <div style={claimResultStyles.imageGrid}>
+            <ResultImage label="Insurance Plate Image" file={referenceImages.insurance_plate} />
+            <ResultImage label="Claim Plate Image" file={referenceImages.claim_plate} />
+          </div>
+          <ResultRow label="Similarity" value={percent(result.verification?.plate?.similarity)} />
+          <ResultRow
+            label="Visual Similarity"
+            value={percent(result.verification?.plate?.visual_similarity)}
+          />
+          <ResultRow label="Result" value={matchText(result.verification?.plate?.match)} />
+          <ResultRow label="Insurance Plate Number" value={insuredPlate} />
+          <ResultRow label="Submitted Claim Plate" value={submittedClaimPlate} />
+          <ResultRow label="Detected Claim Plate Number" value={detectedPlate} />
+          <ResultRow label="Plate Match" value={percent(plateMatch)} />
+          {plateMismatch && <ResultRow label="Mismatch Reason" value={plateMismatch} />}
+          {fileWarnings && <ResultRow label="File Warning" value={fileWarnings} />}
+        </ResultSection>
+
+        <ResultSection title="🪪 Driver License Verification">
+          <div style={claimResultStyles.imageGrid}>
+            <ResultImage label="Insurance License Image" file={referenceImages.insurance_license} />
+            <ResultImage label="Claim License Image" file={referenceImages.claim_license} />
+          </div>
+          <ResultRow label="Similarity" value={percent(result.verification?.license?.similarity)} />
+          <ResultRow
+            label="Visual Similarity"
+            value={percent(result.verification?.license?.visual_similarity)}
+          />
+          <ResultRow
+            label="License Verification Result"
+            value={matchText(result.verification?.license?.match)}
+          />
+          <ResultRow
+            label="Insurance License Number"
+            value={licenseOcr.insured_license || licenseOcr.insuredLicense}
+          />
+          <ResultRow
+            label="Detected Claim License Number"
+            value={licenseOcr.detected_license || licenseOcr.detectedLicense}
+          />
+          <ResultRow label="License OCR Match" value={percent(licenseMatch)} />
+        </ResultSection>
+
+        <section style={claimResultStyles.decision}>
+          <h3 style={claimResultStyles.sectionTitle}>🎯 Final Decision</h3>
+          <ResultRow
+            label="Overall Risk Score"
+            value={percent(result.decision?.overall_risk_score)}
+          />
+          <ResultRow label="Final Status" value={result.decision?.final_status} />
+          <ResultRow
+            label="Recommended Action"
+            value={result.decision?.recommended_action}
+          />
+        </section>
+      </div>
+    </div>
+  );
+};
+
 /* ============================
    STYLES
 ============================ */
@@ -795,16 +864,26 @@ viewBtn: {
   cursor: "pointer"
 },
 
-  status: (s) => ({
-    padding: "6px 14px",
-    borderRadius: "20px",
-    background:
-      s === "approved"
-        ? "#d1e7dd"
-        : s === "rejected"
-        ? "#f8d7da"
-        : "#fff3cd",
-  }),
+  modalSectionTitle: {
+    margin: "18px 0 10px",
+    color: "#0d6efd",
+    fontSize: "18px",
+  },
+
+  status: (s) => {
+    const status = normalizeStatus(s);
+
+    return {
+      padding: "6px 14px",
+      borderRadius: "20px",
+      background:
+        status === "approved"
+          ? "#d1e7dd"
+          : status === "rejected"
+          ? "#f8d7da"
+          : "#fff3cd",
+    };
+  },
 
   overlay: {
     position: "fixed",
@@ -897,6 +976,35 @@ viewBtn: {
   padding: "10px 18px",
   border: "none",
   borderRadius: "8px",
+  cursor: "pointer",
+},
+disabledBtn: {
+  opacity: 0.7,
+  cursor: "not-allowed",
+},
+detectingNotice: {
+  margin: "24px 0 8px",
+  padding: "14px 16px",
+  border: "1px solid #bae6fd",
+  borderRadius: "8px",
+  background: "#f0f9ff",
+  color: "#0f172a",
+  display: "flex",
+  gap: "12px",
+  alignItems: "center",
+},
+detectingText: {
+  margin: "4px 0 0",
+  color: "#52627a",
+  fontSize: "13px",
+},
+spinner: {
+  width: "22px",
+  height: "22px",
+  border: "3px solid #bae6fd",
+  borderTopColor: "#0ea5e9",
+  borderRadius: "50%",
+  animation: "spin 1s linear infinite",
 },
 closeActionBtn: {
   background: "#6c757d",
@@ -939,6 +1047,92 @@ const resultStyles = {
     padding: "15px",
     textAlign: "center",
     fontWeight: "bold",
+  },
+};
+
+const claimResultStyles = {
+  wrap: {
+    display: "flex",
+    justifyContent: "center",
+    margin: "34px 0 26px",
+  },
+  card: {
+    width: "min(620px, 100%)",
+    background: "#fff",
+    color: "#000",
+    borderRadius: "8px",
+    padding: "30px 26px",
+    boxShadow: "0 18px 45px rgba(15, 23, 42, 0.12)",
+    fontFamily: "Arial, sans-serif",
+  },
+  title: {
+    margin: "0 0 18px",
+    fontSize: "26px",
+    lineHeight: 1.2,
+    fontWeight: 700,
+  },
+  subtitle: {
+    margin: "0 0 30px",
+    color: "#52627a",
+    fontSize: "13px",
+  },
+  section: {
+    padding: "0 0 18px",
+    marginBottom: "28px",
+    borderBottom: "1px solid #d7dee8",
+  },
+  sectionTitle: {
+    margin: "0 0 18px",
+    fontSize: "16px",
+    fontWeight: 700,
+  },
+  row: {
+    display: "grid",
+    gridTemplateColumns: "180px minmax(0, 1fr)",
+    gap: "18px",
+    alignItems: "start",
+    padding: "6px 0",
+    fontSize: "14px",
+  },
+  label: {
+    fontWeight: 700,
+  },
+  value: {
+    textAlign: "right",
+    overflowWrap: "anywhere",
+  },
+  imageGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+    gap: "14px",
+    marginBottom: "14px",
+  },
+  imageBox: {
+    border: "1px solid #d7dee8",
+    borderRadius: "6px",
+    padding: "8px",
+    background: "#f8fafc",
+  },
+  imageLabel: {
+    display: "block",
+    marginBottom: "7px",
+    fontSize: "12px",
+    fontWeight: 700,
+    color: "#52627a",
+  },
+  image: {
+    width: "100%",
+    height: "130px",
+    objectFit: "cover",
+    borderRadius: "4px",
+    display: "block",
+  },
+  decision: {
+    marginTop: "-10px",
+    padding: "22px 16px",
+    border: "1px solid #9ec5fe",
+    borderRadius: "6px",
+    background: "#edf5ff",
   },
 };
 

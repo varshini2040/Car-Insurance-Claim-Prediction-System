@@ -33,6 +33,8 @@ policyDuration: ""
 const [carImage, setCarImage] = useState(null);
 const [plateImage, setPlateImage] = useState(null);
 const [licenseImage, setLicenseImage] = useState(null);
+const [isSubmitting, setIsSubmitting] = useState(false);
+const [submitted, setSubmitted] = useState(false);
 
 
   useEffect(() => {
@@ -56,27 +58,6 @@ const [licenseImage, setLicenseImage] = useState(null);
     });
   };
 
- // ============================
-// HANDLE CAR IMAGE
-// ============================
-const handleCarImageChange = (e) => {
-  setCarImage(e.target.files[0]);
-};
-
-// ============================
-// HANDLE PLATE IMAGE
-// ============================
-const handlePlateImageChange = (e) => {
-  setPlateImage(e.target.files[0]);
-};
-
-// ============================
-// HANDLE LICENSE IMAGE
-// ============================
-const handleLicenseImageChange = (e) => {
-  setLicenseImage(e.target.files[0]);
-};
-
   // ============================
   // SUBMIT CLAIM
   // ============================
@@ -93,7 +74,13 @@ const handleLicenseImageChange = (e) => {
       return;
     }
 
+    if (!carImage || !plateImage || !licenseImage) {
+      alert("All three verification images are required.");
+      return;
+    }
+
     try {
+      setIsSubmitting(true);
       const data = new FormData();
 
       data.append("userId", user._id);
@@ -122,7 +109,7 @@ data.append("carImage", carImage);
 data.append("plateImage", plateImage);
 data.append("licenseImage", licenseImage);
 
-      const res = await axios.post(
+      await axios.post(
         "http://localhost:5000/api/claims/submit",
         data,
         {
@@ -132,25 +119,33 @@ data.append("licenseImage", licenseImage);
         }
       );
 
-      alert("✅ Claim submitted successfully");
+      setSubmitted(true);
+      setTimeout(() => navigate("/myclaims"), 1800);
 
-      // Store complete claim result in localStorage
-      localStorage.setItem("predictionResult", JSON.stringify(res.data.claim));
-      
-     
-      // Navigate to results page
-      setTimeout(() => {
-        navigate("/results");
-      }, 1000);
+
+
 
     } catch (err) {
       console.log("ERROR:", err.response?.data || err.message);
       alert(err.response?.data?.message || "Submit failed ❌");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
 
-  
+  if (submitted) {
+    return (
+      <div style={styles.successPage}>
+        <div style={styles.successBox}>
+          <h2 style={styles.successTitle}>✅ Claim Submitted Successfully</h2>
+          <p style={styles.successText}>
+            Your claim has been submitted and is under review by the insurance administrator.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={styles.container}>
@@ -230,9 +225,9 @@ data.append("licenseImage", licenseImage);
             </div>
           </div>
 
-{/* Prediction Details */}
+{/* Additional Claim Details */}
 <div style={styles.section}>
-  <h3 style={styles.sectionTitle}>Fraud Prediction Inputs</h3>
+  <h3 style={styles.sectionTitle}>Additional Claim Details</h3>
 
   <div style={styles.formGrid}>
 
@@ -339,6 +334,7 @@ data.append("licenseImage", licenseImage);
       type="file"
       accept="image/*"
       onChange={(e) => setCarImage(e.target.files[0])}
+      required
       style={styles.fileInput}
     />
 
@@ -358,6 +354,7 @@ data.append("licenseImage", licenseImage);
       type="file"
       accept="image/*"
       onChange={(e) => setPlateImage(e.target.files[0])}
+      required
       style={styles.fileInput}
     />
 
@@ -377,6 +374,7 @@ data.append("licenseImage", licenseImage);
       type="file"
       accept="image/*"
       onChange={(e) => setLicenseImage(e.target.files[0])}
+      required
       style={styles.fileInput}
     />
 
@@ -392,20 +390,20 @@ data.append("licenseImage", licenseImage);
 
           <button
   type="submit"
-  disabled={!formData.policyNumber || !formData.licensePlate}
+  disabled={!formData.policyNumber || !formData.licensePlate || isSubmitting}
   style={{
     ...styles.submitButton,
     backgroundColor:
-      !formData.policyNumber || !formData.licensePlate
+      !formData.policyNumber || !formData.licensePlate || isSubmitting
         ? "#adb5bd"
         : "#0d6efd",
     cursor:
-      !formData.policyNumber || !formData.licensePlate
+      !formData.policyNumber || !formData.licensePlate || isSubmitting
         ? "not-allowed"
         : "pointer"
   }}
 >
-  Submit Claim
+  {isSubmitting ? "Submitting your claim..." : "Submit Claim"}
 </button>
         </form>
 
@@ -498,6 +496,33 @@ const styles = {
     padding: '15px',
     background: '#d1e7dd',
     borderRadius: '8px'
+  },
+  successPage: {
+    minHeight: "70vh",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#f8f9fa",
+    padding: "2rem"
+  },
+  successBox: {
+    maxWidth: "560px",
+    width: "100%",
+    background: "white",
+    border: "1px solid #d1e7dd",
+    borderRadius: "8px",
+    padding: "2rem",
+    textAlign: "center",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.08)"
+  },
+  successTitle: {
+    color: "#0f5132",
+    marginTop: 0
+  },
+  successText: {
+    color: "#495057",
+    fontSize: "1.05rem",
+    marginBottom: 0
   }
 };
 

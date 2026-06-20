@@ -31,7 +31,7 @@ const ClaimHistory = () => {
         >
           <p>Vehicle: {c.vehicleNumber}</p>
           <p>Amount: ₹{c.claimAmount}</p>
-          <p>Prediction: {c.predictionResult}</p>
+
           <p>Status: {c.status}</p>
         </div>
       ))}

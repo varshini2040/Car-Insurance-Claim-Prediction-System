@@ -18,6 +18,7 @@ import {
 } from "recharts";
 
 import jsPDF from "jspdf";
+import { getStatusStats } from "../utils/status";
 
 const AnalyticsPage = () => {
   // CLAIM STATS
@@ -63,10 +64,8 @@ const AnalyticsPage = () => {
         "http://localhost:5000/api/claims/all"
       );
       const claims = claimRes.data;
+      const claimStatusStats = getStatusStats(claims);
 
-      const approvedC = claims.filter((c) => c.status === "approved").length;
-      const rejectedC = claims.filter((c) => c.status === "rejected").length;
-      const pendingC = claims.filter((c) => c.status === "pending").length;
       const fraudulentC = claims.filter(
   (c) =>
     c.predictionResult === "Fraud" ||
@@ -74,9 +73,9 @@ const AnalyticsPage = () => {
 ).length;
       setClaimStats({
         totalClaims: claims.length,
-        approvedClaims: approvedC,
-        rejectedClaims: rejectedC,
-        pendingClaims: pendingC,
+        approvedClaims: claimStatusStats.approved,
+        rejectedClaims: claimStatusStats.rejected,
+        pendingClaims: claimStatusStats.pending,
         fraudulent: fraudulentC,
       });
 
@@ -139,16 +138,13 @@ setFraudMonthly(fraudTrend);
         "http://localhost:5000/api/insurance/all"
       );
       const apps = insRes.data;
-
-      const approvedA = apps.filter((a) => a.status === "approved").length;
-      const rejectedA = apps.filter((a) => a.status === "rejected").length;
-      const pendingA = apps.filter((a) => a.status === "pending").length;
+      const appStatusStats = getStatusStats(apps);
 
       setInsuranceStats({
         totalApplications: apps.length,
-        approvedApplications: approvedA,
-        rejectedApplications: rejectedA,
-        pendingApplications: pendingA,
+        approvedApplications: appStatusStats.approved,
+        rejectedApplications: appStatusStats.rejected,
+        pendingApplications: appStatusStats.pending,
       });
 
       // =============================

@@ -36,7 +36,7 @@ const predictClaim = async (req, res) => {
           {
             predictionResult: aiResponse.data.prediction_label || (aiResponse.data.prediction === 1 ? "Fraud" : "Legitimate"),
             fraudRisk: aiResponse.data.risk_level,
-            fraudProbability: aiResponse.data.fraud_probability / 100, // Convert percentage to decimal
+            fraudProbability: aiResponse.data.fraud_probability,
             modelUsed: aiResponse.data.model_used
           },
           { new: true }
@@ -51,8 +51,8 @@ const predictClaim = async (req, res) => {
       success: true,
       prediction: aiResponse.data.prediction,
       predictionLabel: aiResponse.data.prediction_label,
-      fraudProbability: aiResponse.data.fraud_probability / 100, // Convert percentage to decimal (0-1)
-      legitimateProbability: aiResponse.data.legitimate_probability / 100,
+      fraudProbability: aiResponse.data.fraud_probability,
+      legitimateProbability: 100 - aiResponse.data.fraud_probability,
       riskLevel: aiResponse.data.risk_level,
       modelUsed: aiResponse.data.model_used,
       inputFeatures: aiResponse.data.input_features

@@ -12,7 +12,7 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 import Home from "./pages/Home";
 import Predict from "./pages/Predict";
-import ResultsPage from "./pages/ResultsPage";
+
 import SignUp from "./pages/SignUp";
 import SignIn from "./pages/SignIn";
 import Logout from "./pages/Logout";
@@ -98,8 +98,7 @@ const AppContent = ({ user, isAdmin, login, logout }) => {
 
           {/* ✅ PREDICTION ROUTES */}
           <Route path="/predict" element={<Predict />} />
-          <Route path="/results" element={<ResultsPage />} />
-          <Route path="/result" element={<ResultsPage />} />
+
           {/* USER PROTECTED ROUTES */}
           <Route
             path="/apply-insurance"

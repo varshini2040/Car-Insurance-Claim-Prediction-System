@@ -246,9 +246,7 @@ const loadMyApplications = async () => {
                     <strong>Claim Amount:</strong> ₹{claim.claimAmount}
                   </p>
 
-                  <p>
-                    <strong>Prediction:</strong> {claim.predictionResult}
-                  </p>
+
 
                   {/* Accident Image */}
                   {claim.accidentImage && (

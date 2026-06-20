@@ -1,15 +1,32 @@
 const mongoose = require("mongoose");
 
+const comparisonSchema = new mongoose.Schema(
+  {
+    success: { type: Boolean, required: true },
+    similarity: { type: Number, min: 0, max: 100, required: true },
+    match: { type: Boolean, required: true },
+    threshold: { type: Number, min: 0, max: 100, required: true },
+    model: String,
+    error: String,
+    visual_similarity: Number,
+    verification_basis: String,
+    ocr_match: Boolean,
+    plate_identity_confirmed: Boolean,
+    mismatch_reasons: [String],
+  },
+  { _id: false }
+);
+
 const claimSchema = new mongoose.Schema(
   {
-    userId: {
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    insuranceApplicationId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: "InsuranceApplication",
       required: true,
     },
-
+    policyNumber: { type: String, required: true, index: true },
     licensePlate: String,
-    policyNumber: String,
     accidentDate: String,
     accidentLocation: String,
     damageType: String,
@@ -18,80 +35,71 @@ const claimSchema = new mongoose.Schema(
     describeAccident: String,
     estimatedCost: Number,
     claimAmount: Number,
-age: Number,
-gender: String,
-vehicleAge: Number,
-vehicleType: String,
-annualPremium: Number,
-drivingExperience: Number,
-accidentHistory: Number,
-claimHistory: Number,
-creditScore: Number,
-policyDuration: Number,
-carImage: String,
-plateImage: String,
-licenseImage: String,
-prediction: {
-  type: Number,
-  default: 0,
-},
-    predictionResult: {
-      type: String,
-      default: "Pending",
+    age: Number,
+    gender: String,
+    vehicleAge: Number,
+    vehicleType: String,
+    annualPremium: Number,
+    drivingExperience: Number,
+    accidentHistory: Number,
+    claimHistory: Number,
+    creditScore: Number,
+    policyDuration: Number,
+    carImage: { type: String, required: true },
+    plateImage: { type: String, required: true },
+    licenseImage: { type: String, required: true },
+    prediction: { type: Number, enum: [0, 1], default: null },
+    predictionResult: { type: String, default: null },
+    fraudRisk: { type: String, enum: ["Low", "Medium", "High", null], default: null },
+    fraudProbability: { type: Number, min: 0, max: 100, default: null },
+    modelUsed: { type: String, default: "RandomForest" },
+    imageVerification: {
+      vehicle: { type: comparisonSchema, default: null },
+      plate: { type: comparisonSchema, default: null },
+      license: { type: comparisonSchema, default: null },
     },
-
-    fraudRisk: {
-      type: String,
-      default: "Low",
+    plateOcr: {
+      insuredPlate: String,
+      insuranceImagePlate: String,
+      detectedPlate: String,
+      submittedClaimPlate: String,
+      matchPercentage: Number,
+      mismatchReasons: [String],
+      success: Boolean,
+      error: String,
     },
-
-    fraudProbability: {
-      type: Number,
-      default: 0,
+    licenseOcr: {
+      insuredLicense: String,
+      detectedLicense: String,
+      insuredName: String,
+      detectedName: String,
+      insuredDob: String,
+      detectedDob: String,
+      matchPercentage: Number,
+      success: Boolean,
+      error: String,
     },
-
-    modelUsed: {
-      type: String,
-      default: "random_forest",
+    vehicleSimilarity: { type: Number, min: 0, max: 100, default: null },
+    plateSimilarity: { type: Number, min: 0, max: 100, default: null },
+    licenseSimilarity: { type: Number, min: 0, max: 100, default: null },
+    overallRiskScore: { type: Number, min: 0, max: 100, default: null },
+    finalStatus: { type: String, default: null },
+    recommendedAction: { type: String, default: null },
+    decisionWeights: {
+      fraud: Number,
+      vehicle: Number,
+      plate: Number,
+      license: Number,
     },
-
-    // Image Verification Fields
-    vehicleSimilarity: {
-      type: Number,
-      default: 0,
-    },
-
-    licensePlateMatch: {
-      type: Object,
-      default: {
-        storedPlate: "",
-        detectedPlate: "",
-        matchPercentage: 0,
-      },
-    },
-
-    driverLicenseMatch: {
-      type: Object,
-      default: {
-        storedLicenseNo: "",
-        detectedLicenseNo: "",
-        matchPercentage: 0,
-      },
-    },
-
-    overallRiskScore: {
-      type: Number,
-      default: 0,
-    },
-
     verificationStatus: {
       type: String,
-      enum: ["Pending", "Verified", "Failed"],
+      enum: ["Pending", "Not Detected", "Verified", "Failed"],
       default: "Pending",
     },
-
+    analyzedAt: Date,
     status: {
       type: String,
+      enum: ["Submitted", "Under Review", "Approved", "Rejected"],
       default: "Submitted",
     },
   },
